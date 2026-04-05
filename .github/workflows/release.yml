@@ -102,7 +102,38 @@ jobs:
               -quiet
           fi
 
-      # ── Package DMG ─────────────────────────────────────────────────────────
+      # ── Re-sign nested binaries (Sparkle XPC services, dylibs) ──────────────
+      # Sparkle's pre-built XPC binaries need explicit re-signing with Developer ID
+      - name: Re-sign nested binaries
+        if: steps.check_cert.outputs.HAS_CERT == 'true'
+        run: |
+          APP=$(find "$RUNNER_TEMP/CopilotIsland.xcarchive/Products" -name "CopilotIsland.app" | head -1)
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" \
+            | grep "Developer ID Application" | head -1 \
+            | sed 's/.*"\(.*\)".*/\1/')
+          echo "Re-signing with identity: $IDENTITY"
+
+          # Sign dylibs and .so files
+          find "$APP/Contents" -type f \( -name "*.dylib" -o -name "*.so" \) | while read f; do
+            codesign --force --sign "$IDENTITY" --timestamp "$f" 2>&1 || true
+          done
+
+          # Sign XPC services (inside-out: binaries first, then bundle)
+          find "$APP/Contents" -type d -name "*.xpc" | while read xpc; do
+            codesign --force --sign "$IDENTITY" --timestamp --options runtime "$xpc" 2>&1 || true
+          done
+
+          # Sign frameworks (deepest first)
+          find "$APP/Contents" -type d -name "*.framework" | sort -rn | while read fw; do
+            codesign --force --sign "$IDENTITY" --timestamp --options runtime "$fw" 2>&1 || true
+          done
+
+          # Re-sign the whole app bundle
+          codesign --force --deep --sign "$IDENTITY" --timestamp --options runtime "$APP"
+          echo "✅ Re-signing complete"
+          codesign --verify --deep --strict "$APP" && echo "✅ Verification passed"
+
+
       - name: Package DMG
         env:
           HAS_CERT: ${{ steps.check_cert.outputs.HAS_CERT }}
