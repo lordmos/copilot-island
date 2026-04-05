@@ -184,11 +184,9 @@ private struct AssistantMessageBubble: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            Image(systemName: "leaf.fill")
-                .font(.system(size: 15))
-                .foregroundStyle(CopilotTheme.copilotGradient)
+            CopilotIconView(color: CopilotTheme.sagePrimary, size: 15)
                 .frame(width: 18)
-                .padding(.top, 2)
+                .padding(.top, 3)
 
             VStack(alignment: .leading, spacing: 0) {
                 if message.content.isEmpty {

@@ -95,10 +95,11 @@ struct NotchView: View {
         HStack {
             // Logo + Title
             HStack(spacing: 6) {
-                // Copilot octicon (simplified as leaf/sparkle)
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(CopilotTheme.copilotGradient)
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 18, height: 18)
+                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
 
                 Text("Copilot Island")
                     .font(.system(size: 13, weight: .semibold))

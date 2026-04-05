@@ -204,66 +204,70 @@ final class SessionFileWatcher: @unchecked Sendable {
         let lines = text.components(separatedBy: "\n").filter { !$0.isEmpty }
         let decoder = JSONDecoder()
 
-        for line in lines {
-            guard let lineData = line.data(using: .utf8),
-                  let event = try? decoder.decode(CopilotRawEvent.self, from: lineData)
-            else { continue }
-            handleEvent(event, sessionId: sessionId)
+        let events = lines.compactMap { line -> CopilotRawEvent? in
+            guard let lineData = line.data(using: .utf8) else { return nil }
+            return try? decoder.decode(CopilotRawEvent.self, from: lineData)
+        }
+
+        // Process events in a single ordered Task to guarantee sequential state transitions
+        Task {
+            for event in events {
+                await processEvent(event, sessionId: sessionId)
+            }
         }
     }
 
-    private func handleEvent(_ raw: CopilotRawEvent, sessionId: String) {
+    private func processEvent(_ raw: CopilotRawEvent, sessionId: String) async {
         let data = raw.data
-        Task {
-            switch raw.type {
-            case "user.message":
-                let content = data?.content ?? ""
-                await SessionStore.shared.process(.userMessageSent(sessionId: sessionId, content: content))
+        switch raw.type {
+        case "user.message":
+            let content = data?.content ?? ""
+            await SessionStore.shared.process(.userMessageSent(sessionId: sessionId, content: content))
 
-            case "assistant.turn_start":
-                await SessionStore.shared.process(.assistantTurnStarted(sessionId: sessionId))
+        case "assistant.turn_start":
+            await SessionStore.shared.process(.assistantTurnStarted(sessionId: sessionId))
 
-            case "assistant.message":
-                let content = data?.content ?? ""
-                let messageId = data?.messageId ?? UUID().uuidString
-                await SessionStore.shared.process(.assistantMessageReceived(
-                    sessionId: sessionId, content: content, messageId: messageId
-                ))
+        case "assistant.message":
+            let content = data?.content ?? ""
+            let messageId = data?.messageId ?? UUID().uuidString
+            await SessionStore.shared.process(.assistantMessageReceived(
+                sessionId: sessionId, content: content, messageId: messageId
+            ))
 
-            case "tool.execution_start":
-                let toolCallId = data?.toolCallId ?? UUID().uuidString
-                let toolName = data?.toolName ?? "unknown"
-                let args = data?.arguments?.stringValue ?? "{}"
-                await SessionStore.shared.process(.toolStarted(
-                    sessionId: sessionId, toolCallId: toolCallId,
-                    toolName: toolName, arguments: args
-                ))
+        case "tool.execution_start":
+            let toolCallId = data?.toolCallId ?? UUID().uuidString
+            let toolName = data?.toolName ?? "unknown"
+            let args = data?.arguments?.stringValue ?? "{}"
+            await SessionStore.shared.process(.toolStarted(
+                sessionId: sessionId, toolCallId: toolCallId,
+                toolName: toolName, arguments: args
+            ))
 
-            case "tool.execution_complete":
-                let toolCallId = data?.toolCallId ?? UUID().uuidString
-                let success = data?.success ?? true
-                let result = data?.result?.stringValue ?? ""
-                await SessionStore.shared.process(.toolCompleted(
-                    sessionId: sessionId, toolCallId: toolCallId,
-                    success: success, result: result
-                ))
+        case "tool.execution_complete":
+            let toolCallId = data?.toolCallId ?? UUID().uuidString
+            let success = data?.success ?? true
+            let result = data?.result?.stringValue ?? ""
+            await SessionStore.shared.process(.toolCompleted(
+                sessionId: sessionId, toolCallId: toolCallId,
+                success: success, result: result
+            ))
 
-            case "assistant.turn_end":
-                await SessionStore.shared.process(.assistantTurnEnded(sessionId: sessionId))
+        case "assistant.turn_end":
+            await SessionStore.shared.process(.assistantTurnEnded(sessionId: sessionId))
 
-            case "abort":
-                await SessionStore.shared.process(.sessionAborted(sessionId: sessionId))
+        case "abort":
+            await SessionStore.shared.process(.sessionAborted(sessionId: sessionId))
 
-            case "session.error":
-                let reason = data?.reason ?? "Unknown error"
-                await SessionStore.shared.process(.sessionError(sessionId: sessionId, reason: reason))
+        case "session.error":
+            // Real Copilot CLI uses "message" field; fall back to "reason" for compatibility
+            let reason = data?.errorMessage ?? data?.reason ?? "Unknown error"
+            await SessionStore.shared.process(.sessionError(sessionId: sessionId, reason: reason))
 
-            case "session.shutdown":
-                await SessionStore.shared.process(.sessionShutdown(sessionId: sessionId))
+        case "session.shutdown":
+            await SessionStore.shared.process(.sessionShutdown(sessionId: sessionId))
 
-            default:
-                break
-            }
+        default:
+            break
         }
     }
 }

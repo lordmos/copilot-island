@@ -45,6 +45,7 @@ struct CopilotEventData: Codable, Sendable {
 
     // session.shutdown / error
     let reason: String?
+    let errorMessage: String?  // "message" field in session.error events
 
     enum CodingKeys: String, CodingKey {
         case sessionId, copilotVersion, startTime
@@ -54,6 +55,7 @@ struct CopilotEventData: Codable, Sendable {
         case toolCallId, toolName, arguments
         case success, result
         case reason
+        case errorMessage = "message"
     }
 }
 
