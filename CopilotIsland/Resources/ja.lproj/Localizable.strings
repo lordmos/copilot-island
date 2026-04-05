@@ -1,0 +1,22 @@
+/* Japanese */
+
+"No active Copilot sessions" = "アクティブな Copilot セッションはありません";
+"Run the Copilot CLI to get started" = "Copilot CLI を起動して始めましょう";
+"No messages yet" = "メッセージはまだありません";
+"(empty)" = "（空）";
+"on %@" = "%@ にて";
+"Running: %@" = "実行中：%@";
+"Thinking: %@" = "思考中：%@";
+"Processing…" = "処理中…";
+"Waiting for input" = "入力待機中";
+"Session ended" = "セッションが終了しました";
+"Error: %@" = "エラー：%@";
+"SESSION MONITORING" = "セッション監視";
+"ABOUT" = "このアプリについて";
+"Watching for Copilot CLI sessions automatically" = "Copilot CLI セッションを自動的に監視しています";
+"Copilot Island" = "Copilot Island";
+"View on GitHub →" = "GitHub で見る →";
+"Quit Copilot Island" = "Copilot Island を終了";
+"Back" = "戻る";
+"Sessions" = "セッション";
+"Settings" = "設定";

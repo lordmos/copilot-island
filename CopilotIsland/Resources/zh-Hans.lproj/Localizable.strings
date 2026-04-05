@@ -1,0 +1,22 @@
+/* Simplified Chinese */
+
+"No active Copilot sessions" = "暂无活跃的 Copilot 会话";
+"Run the Copilot CLI to get started" = "运行 Copilot CLI 以开始使用";
+"No messages yet" = "暂无消息";
+"(empty)" = "（空）";
+"on %@" = "在 %@ 上";
+"Running: %@" = "运行中：%@";
+"Thinking: %@" = "思考中：%@";
+"Processing…" = "处理中…";
+"Waiting for input" = "等待输入";
+"Session ended" = "会话已结束";
+"Error: %@" = "错误：%@";
+"SESSION MONITORING" = "会话监控";
+"ABOUT" = "关于";
+"Watching for Copilot CLI sessions automatically" = "自动监听 Copilot CLI 会话";
+"Copilot Island" = "Copilot Island";
+"View on GitHub →" = "在 GitHub 上查看 →";
+"Quit Copilot Island" = "退出 Copilot Island";
+"Back" = "返回";
+"Sessions" = "会话";
+"Settings" = "设置";

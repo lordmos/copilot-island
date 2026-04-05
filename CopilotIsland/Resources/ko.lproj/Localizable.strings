@@ -1,0 +1,22 @@
+/* Korean */
+
+"No active Copilot sessions" = "활성 Copilot 세션 없음";
+"Run the Copilot CLI to get started" = "Copilot CLI를 실행하여 시작하세요";
+"No messages yet" = "메시지가 없습니다";
+"(empty)" = "(비어 있음)";
+"on %@" = "%@에서";
+"Running: %@" = "실행 중: %@";
+"Thinking: %@" = "생각 중: %@";
+"Processing…" = "처리 중…";
+"Waiting for input" = "입력 대기 중";
+"Session ended" = "세션이 종료되었습니다";
+"Error: %@" = "오류: %@";
+"SESSION MONITORING" = "세션 모니터링";
+"ABOUT" = "정보";
+"Watching for Copilot CLI sessions automatically" = "Copilot CLI 세션을 자동으로 감지하는 중";
+"Copilot Island" = "Copilot Island";
+"View on GitHub →" = "GitHub에서 보기 →";
+"Quit Copilot Island" = "Copilot Island 종료";
+"Back" = "뒤로";
+"Sessions" = "세션";
+"Settings" = "설정";

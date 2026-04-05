@@ -10,7 +10,6 @@ import SwiftUI
 struct SessionsListView: View {
     let sessions: [SessionState]
     let onSelectSession: (SessionState) -> Void
-    let onAPIChat: () -> Void
 
     var body: some View {
         ScrollView {
@@ -23,32 +22,6 @@ struct SessionsListView: View {
                             .onTapGesture { onSelectSession(session) }
                     }
                 }
-
-                Divider().background(CopilotTheme.border).padding(.horizontal, 8)
-
-                // Direct AI Chat button
-                Button(action: onAPIChat) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "bubble.left.and.bubble.right")
-                            .font(.system(size: 13))
-                            .foregroundStyle(CopilotTheme.copilotGradient)
-
-                        Text("Chat with GitHub Models AI")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(CopilotTheme.textPrimary)
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 10))
-                            .foregroundColor(CopilotTheme.textTertiary)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .copilotCard()
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 8)
             }
             .padding(12)
         }
@@ -95,16 +68,15 @@ struct SessionCard: View {
                     if let branch = session.gitBranch {
                         Text(branch)
                             .font(.system(size: 10))
-                            .foregroundColor(CopilotTheme.textTertiary)
+                            .foregroundColor(CopilotTheme.sagePrimary.opacity(0.8))
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
-                            .background(CopilotTheme.border)
+                            .background(CopilotTheme.sagePrimary.opacity(0.1))
                             .clipShape(Capsule())
                     }
 
                     Spacer()
 
-                    // Phase indicator
                     phaseIndicator
                 }
 
@@ -124,13 +96,13 @@ struct SessionCard: View {
         case .runningTool(let name, _):
             return "⚡ \(name)"
         case .processing:
-            return session.lastUserMessage.map { "Thinking: \($0)" } ?? "Processing…"
+            return session.lastUserMessage.map { String(format: NSLocalizedString("Thinking: %@", comment: ""), $0) } ?? NSLocalizedString("Processing…", comment: "")
         case .waitingForInput:
-            return session.lastUserMessage ?? "Waiting for input"
+            return session.lastUserMessage ?? NSLocalizedString("Waiting for input", comment: "")
         case .ended:
-            return "Session ended"
+            return NSLocalizedString("Session ended", comment: "")
         case .error(let msg):
-            return "Error: \(msg)"
+            return String(format: NSLocalizedString("Error: %@", comment: ""), msg)
         default:
             return session.phase.displayLabel
         }
@@ -143,10 +115,11 @@ struct SessionCard: View {
             ProgressView()
                 .scaleEffect(0.5)
                 .frame(width: 14, height: 14)
+                .tint(CopilotTheme.sagePrimary)
         case .runningTool:
             Image(systemName: "bolt.fill")
                 .font(.system(size: 10))
-                .foregroundColor(CopilotTheme.copilotPurple)
+                .foregroundColor(CopilotTheme.sagePrimary)
         case .waitingForInput:
             Image(systemName: "pause.circle")
                 .font(.system(size: 12))

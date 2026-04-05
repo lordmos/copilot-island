@@ -18,13 +18,23 @@ struct ChatHistoryView: View {
             // Header
             HStack(spacing: 8) {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(CopilotTheme.textSecondary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 11, weight: .semibold))
+                        Text("Back")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundColor(CopilotTheme.sagePrimary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(CopilotTheme.sagePrimary.opacity(0.1))
+                    .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
 
-                VStack(alignment: .leading, spacing: 1) {
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 1) {
                     Text(session.projectName)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(CopilotTheme.textPrimary)
@@ -32,11 +42,9 @@ struct ChatHistoryView: View {
                     if let branch = session.gitBranch {
                         Text("on \(branch)")
                             .font(.system(size: 10))
-                            .foregroundColor(CopilotTheme.textTertiary)
+                            .foregroundColor(CopilotTheme.sagePrimary.opacity(0.7))
                     }
                 }
-
-                Spacer()
 
                 // Status
                 HStack(spacing: 4) {
@@ -56,9 +64,9 @@ struct ChatHistoryView: View {
             if session.messages.isEmpty {
                 Spacer()
                 VStack(spacing: 8) {
-                    Image(systemName: "message")
+                    Image(systemName: "bubble.left")
                         .font(.system(size: 24))
-                        .foregroundColor(CopilotTheme.textTertiary)
+                        .foregroundStyle(CopilotTheme.copilotGradient)
                     Text("No messages yet")
                         .font(.system(size: 12))
                         .foregroundColor(CopilotTheme.textTertiary)
@@ -86,11 +94,11 @@ struct ChatHistoryView: View {
             // Active tool indicator
             if case .runningTool(let name, let args) = session.phase {
                 HStack(spacing: 8) {
-                    ProgressView().scaleEffect(0.6)
+                    ProgressView().scaleEffect(0.6).tint(CopilotTheme.sagePrimary)
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Running: \(name)")
                             .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(CopilotTheme.copilotPurple)
+                            .foregroundColor(CopilotTheme.sagePrimary)
                         if !args.isEmpty && args != "{}" {
                             Text(args.prefix(60))
                                 .font(.system(size: 10, design: .monospaced))
@@ -101,7 +109,7 @@ struct ChatHistoryView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
-                .background(CopilotTheme.cardBackground)
+                .background(CopilotTheme.sagePrimary.opacity(0.06))
             }
         }
     }
@@ -141,7 +149,7 @@ struct MessageBubble: View {
                     .font(.system(size: 18))
                     .foregroundColor(CopilotTheme.githubBlue)
             case .assistant:
-                Image(systemName: "sparkle")
+                Image(systemName: "leaf.fill")
                     .font(.system(size: 16))
                     .foregroundStyle(CopilotTheme.copilotGradient)
             case .tool:
@@ -155,7 +163,7 @@ struct MessageBubble: View {
     private var bubbleColor: Color {
         switch message.role {
         case .user: return CopilotTheme.githubBlue.opacity(0.2)
-        case .assistant: return CopilotTheme.cardBackground
+        case .assistant: return CopilotTheme.sagePrimary.opacity(0.08)
         case .tool: return Color.black.opacity(0.3)
         }
     }

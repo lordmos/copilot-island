@@ -98,6 +98,9 @@ class WindowManager {
 
         let window = NotchWindow(contentRect: windowFrame)
         window.contentView = hostingView
+        // Re-apply frame after level is set to ensure window sits at exact screen top.
+        // Without this, the system may constrain position before .mainMenu+3 level takes effect.
+        window.setFrame(windowFrame, display: false)
         window.makeKeyAndOrderFront(nil)
         notchWindow = window
 

@@ -7,7 +7,7 @@ export default defineConfig({
 
   head: [
     ['link', { rel: 'icon', href: '/copilot-island/hero.svg' }],
-    ['meta', { name: 'theme-color', content: '#6E40C9' }],
+    ['meta', { name: 'theme-color', content: '#6CBB98' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'Copilot Island' }],
     ['meta', { property: 'og:description', content: 'Bring GitHub Copilot CLI to your MacBook Notch' }],
@@ -37,7 +37,6 @@ export default defineConfig({
           text: 'Features',
           items: [
             { text: 'Session Monitoring', link: '/guide/session-monitoring' },
-            { text: 'GitHub Models Chat', link: '/guide/api-chat' },
           ]
         }
       ]

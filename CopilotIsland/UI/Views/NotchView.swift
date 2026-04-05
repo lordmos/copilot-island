@@ -33,19 +33,19 @@ struct NotchView: View {
 
     private var closedPill: some View {
         HStack(spacing: 6) {
-            // Copilot dot
+            // Sage green dot
             Circle()
                 .fill(CopilotTheme.copilotGradient)
                 .frame(width: 8, height: 8)
-                .shadow(color: CopilotTheme.copilotPurple.opacity(0.8), radius: 4)
+                .shadow(color: CopilotTheme.sagePrimary.opacity(0.8), radius: 4)
 
             if sessionMonitor.activeSessions.isEmpty {
-                // Idle — subtle pulse
+                // Idle — subtle dot
                 Circle()
                     .fill(CopilotTheme.textTertiary)
                     .frame(width: 5, height: 5)
             } else {
-                // Active — cyan pulse
+                // Active — sage pulse
                 PulsingDot()
             }
         }
@@ -68,6 +68,7 @@ struct NotchView: View {
 
     private var expandedContent: some View {
         VStack(spacing: 0) {
+            // 4pt gap so the card visually drops from the notch
             Spacer().frame(height: 4)
 
             VStack(spacing: 0) {
@@ -75,17 +76,16 @@ struct NotchView: View {
 
                 Divider()
                     .background(CopilotTheme.border)
-                    .padding(.horizontal, 1)
 
                 contentArea
             }
             .background(CopilotTheme.background)
-            .clipShape(NotchShape(topRadius: 19, bottomRadius: 24))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(
-                NotchShape(topRadius: 19, bottomRadius: 24)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(CopilotTheme.border, lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(0.6), radius: 20, y: 8)
+            .shadow(color: .black.opacity(0.55), radius: 18, y: 6)
             .frame(width: viewModel.openedSize.width, height: viewModel.openedSize.height)
         }
         .frame(maxWidth: .infinity, alignment: .top)
@@ -95,8 +95,9 @@ struct NotchView: View {
         HStack {
             // Logo + Title
             HStack(spacing: 6) {
-                Image(systemName: "sparkle")
-                    .font(.system(size: 13, weight: .semibold))
+                // Copilot octicon (simplified as leaf/sparkle)
+                Image(systemName: "leaf.fill")
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(CopilotTheme.copilotGradient)
 
                 Text("Copilot Island")
@@ -110,10 +111,10 @@ struct NotchView: View {
             if !sessionMonitor.sessions.isEmpty {
                 Text("\(sessionMonitor.sessions.count)")
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(CopilotTheme.textSecondary)
+                    .foregroundColor(CopilotTheme.sagePrimary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(CopilotTheme.cardBackground)
+                    .background(CopilotTheme.sagePrimary.opacity(0.12))
                     .clipShape(Capsule())
             }
 
@@ -138,16 +139,13 @@ struct NotchView: View {
         case .sessions:
             SessionsListView(
                 sessions: sessionMonitor.sessions,
-                onSelectSession: { viewModel.showChat(for: $0) },
-                onAPIChat: { viewModel.showAPIChat() }
+                onSelectSession: { viewModel.showChat(for: $0) }
             )
         case .chat(let session):
             ChatHistoryView(
                 session: session,
                 onBack: { viewModel.exitChat() }
             )
-        case .apiChat:
-            APIChatView(onBack: { viewModel.exitChat() })
         case .menu:
             MenuView(onClose: { viewModel.toggleMenu() })
         }
@@ -162,13 +160,13 @@ struct PulsingDot: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(CopilotTheme.neonCyan.opacity(0.3))
+                .fill(CopilotTheme.sageGlow.opacity(0.3))
                 .frame(width: 10, height: 10)
                 .scaleEffect(pulsing ? 1.6 : 1.0)
                 .opacity(pulsing ? 0 : 0.8)
 
             Circle()
-                .fill(CopilotTheme.neonCyan)
+                .fill(CopilotTheme.sageGlow)
                 .frame(width: 6, height: 6)
         }
         .onAppear {

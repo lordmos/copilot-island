@@ -14,14 +14,12 @@ enum NotchContentType: Equatable {
     case sessions
     case menu
     case chat(SessionState)
-    case apiChat
 
     var id: String {
         switch self {
         case .sessions: return "sessions"
         case .menu: return "menu"
         case .chat(let s): return "chat-\(s.sessionId)"
-        case .apiChat: return "api-chat"
         }
     }
 }
@@ -43,7 +41,7 @@ class NotchViewModel: ObservableObject {
 
     var openedSize: CGSize {
         switch contentType {
-        case .chat, .apiChat:
+        case .chat:
             return CGSize(width: min(screenRect.width * 0.5, 620), height: 580)
         case .menu:
             return CGSize(width: min(screenRect.width * 0.4, 480), height: 360)
@@ -159,7 +157,7 @@ class NotchViewModel: ObservableObject {
     }
 
     func showAPIChat() {
-        contentType = .apiChat
+        // Feature removed — no-op
     }
 
     func exitChat() {

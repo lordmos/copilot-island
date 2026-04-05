@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Copilot Island"
   text: "Your MacBook Notch, Powered by GitHub Copilot"
-  tagline: Monitor Copilot CLI sessions, approve actions, and chat with AI — all from the notch.
+  tagline: Monitor Copilot CLI sessions and browse AI conversations — all from the notch.
   image:
     src: /hero.svg
     alt: Copilot Island
@@ -32,13 +32,9 @@ features:
     title: Full Chat History
     details: Browse the entire conversation with beautiful Markdown rendering. Scroll through AI reasoning, code blocks, and tool results.
 
-  - icon: 🤖
-    title: GitHub Models AI Chat
-    details: Chat directly with GPT-4o, Claude, and other models via GitHub Models API — no CLI required. Your key, your privacy.
-
   - icon: 🎨
     title: Copilot-Inspired Design
-    details: Crafted with GitHub's design language. Deep purple gradients, dark theme, and fluid animations that feel native on macOS.
+    details: Crafted with GitHub's design language. Muted sage-green palette, dark theme, and fluid animations that feel native on macOS.
 
   - icon: 🔓
     title: Fully Open Source
@@ -64,3 +60,4 @@ copilot "Add unit tests for the auth module"
 - macOS 14.0+ (Sonoma or later)
 - MacBook Pro or MacBook Air with notch (2021 or later)
 - GitHub Copilot CLI installed and authenticated
+

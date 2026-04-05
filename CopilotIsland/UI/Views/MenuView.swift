@@ -9,75 +9,15 @@ import SwiftUI
 
 struct MenuView: View {
     let onClose: () -> Void
-    @ObservedObject private var settings = Settings.shared
-    @StateObject private var client = GitHubModelsClient.shared
-    @State private var tokenInput = ""
-    @State private var showTokenField = false
 
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // GitHub Token
-                menuSection("GitHub Models API") {
-                    if client.isConfigured {
-                        HStack {
-                            Image(systemName: "checkmark.shield.fill")
-                                .foregroundColor(CopilotTheme.successGreen)
-                            Text("Token configured")
-                                .font(.system(size: 12))
-                                .foregroundColor(CopilotTheme.textSecondary)
-                            Spacer()
-                            Button("Remove") { client.token = nil }
-                                .buttonStyle(.plain)
-                                .font(.system(size: 11))
-                                .foregroundColor(CopilotTheme.warningRed)
-                        }
-                    } else if showTokenField {
-                        HStack(spacing: 8) {
-                            SecureField("ghp_…", text: $tokenInput)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 12, design: .monospaced))
-                                .foregroundColor(CopilotTheme.textPrimary)
-                            Button("Save") {
-                                client.token = tokenInput.trimmingCharacters(in: .whitespaces)
-                                tokenInput = ""
-                                showTokenField = false
-                            }
-                            .buttonStyle(.plain)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(CopilotTheme.copilotPurple)
-                        }
-                    } else {
-                        Button(action: { showTokenField = true }) {
-                            HStack {
-                                Image(systemName: "plus.circle")
-                                    .foregroundStyle(CopilotTheme.copilotGradient)
-                                Text("Add GitHub Token")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(CopilotTheme.textPrimary)
-                            }
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-
-                // Model Selection
-                menuSection("AI Model") {
-                    Picker("", selection: $settings.selectedModel) {
-                        ForEach(settings.availableModels, id: \.self) { model in
-                            Text(model).tag(model)
-                        }
-                    }
-                    .pickerStyle(.menu)
-                    .font(.system(size: 12))
-                    .tint(CopilotTheme.textPrimary)
-                }
-
                 // Session monitoring info
-                menuSection("Session Monitoring") {
+                menuSection("SESSION MONITORING") {
                     HStack {
                         Image(systemName: "folder.badge.gearshape")
-                            .foregroundColor(CopilotTheme.textTertiary)
+                            .foregroundStyle(CopilotTheme.copilotGradient)
                             .font(.system(size: 11))
                         Text("~/.copilot/session-state/")
                             .font(.system(size: 10, design: .monospaced))
@@ -89,7 +29,7 @@ struct MenuView: View {
                 }
 
                 // About
-                menuSection("About") {
+                menuSection("ABOUT") {
                     HStack {
                         Text("Copilot Island")
                             .font(.system(size: 12, weight: .medium))
@@ -104,7 +44,7 @@ struct MenuView: View {
                     }
                     .buttonStyle(.plain)
                     .font(.system(size: 11))
-                    .foregroundColor(CopilotTheme.githubBlue)
+                    .foregroundColor(CopilotTheme.sagePrimary)
                 }
 
                 Divider().background(CopilotTheme.border).padding(.horizontal, 8)
@@ -128,7 +68,7 @@ struct MenuView: View {
     @ViewBuilder
     func menuSection<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title.uppercased())
+            Text(title)
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundColor(CopilotTheme.textTertiary)
                 .padding(.horizontal, 4)

@@ -1,0 +1,22 @@
+/* German */
+
+"No active Copilot sessions" = "Keine aktiven Copilot-Sitzungen";
+"Run the Copilot CLI to get started" = "Starte das Copilot CLI, um loszulegen";
+"No messages yet" = "Noch keine Nachrichten";
+"(empty)" = "(leer)";
+"on %@" = "auf %@";
+"Running: %@" = "Läuft: %@";
+"Thinking: %@" = "Denkt nach: %@";
+"Processing…" = "Verarbeitung läuft…";
+"Waiting for input" = "Warte auf Eingabe";
+"Session ended" = "Sitzung beendet";
+"Error: %@" = "Fehler: %@";
+"SESSION MONITORING" = "SITZUNGSÜBERWACHUNG";
+"ABOUT" = "ÜBER";
+"Watching for Copilot CLI sessions automatically" = "Überwacht Copilot CLI-Sitzungen automatisch";
+"Copilot Island" = "Copilot Island";
+"View on GitHub →" = "Auf GitHub ansehen →";
+"Quit Copilot Island" = "Copilot Island beenden";
+"Back" = "Zurück";
+"Sessions" = "Sitzungen";
+"Settings" = "Einstellungen";

@@ -1,0 +1,22 @@
+/* Traditional Chinese */
+
+"No active Copilot sessions" = "目前無活躍的 Copilot 工作階段";
+"Run the Copilot CLI to get started" = "執行 Copilot CLI 以開始使用";
+"No messages yet" = "尚無訊息";
+"(empty)" = "（空）";
+"on %@" = "於 %@ 上";
+"Running: %@" = "執行中：%@";
+"Thinking: %@" = "思考中：%@";
+"Processing…" = "處理中…";
+"Waiting for input" = "等待輸入";
+"Session ended" = "工作階段已結束";
+"Error: %@" = "錯誤：%@";
+"SESSION MONITORING" = "工作階段監控";
+"ABOUT" = "關於";
+"Watching for Copilot CLI sessions automatically" = "自動監聽 Copilot CLI 工作階段";
+"Copilot Island" = "Copilot Island";
+"View on GitHub →" = "在 GitHub 上檢視 →";
+"Quit Copilot Island" = "結束 Copilot Island";
+"Back" = "返回";
+"Sessions" = "工作階段";
+"Settings" = "設定";
