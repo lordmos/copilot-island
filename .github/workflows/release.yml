@@ -138,6 +138,7 @@ jobs:
       # ── Notarize + Staple (only when Developer ID cert is present) ───────────
       - name: Notarize DMG
         if: steps.check_cert.outputs.HAS_CERT == 'true'
+        continue-on-error: true   # failure here still publishes the release (signed but not notarized)
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
