@@ -36,7 +36,18 @@ jobs:
         id: check_cert
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
+          echo "=== Secret availability check ==="
+          [ -n "$APPLE_CERTIFICATE" ]          && echo "✅ APPLE_CERTIFICATE set"          || echo "❌ APPLE_CERTIFICATE missing"
+          [ -n "$APPLE_CERTIFICATE_PASSWORD" ] && echo "✅ APPLE_CERTIFICATE_PASSWORD set"  || echo "❌ APPLE_CERTIFICATE_PASSWORD missing"
+          [ -n "$APPLE_TEAM_ID" ]              && echo "✅ APPLE_TEAM_ID set"               || echo "❌ APPLE_TEAM_ID missing"
+          [ -n "$APPLE_ID" ]                   && echo "✅ APPLE_ID set"                    || echo "❌ APPLE_ID missing"
+          [ -n "$APPLE_APP_PASSWORD" ]         && echo "✅ APPLE_APP_PASSWORD set"          || echo "❌ APPLE_APP_PASSWORD missing"
+          echo "================================="
           if [ -n "$APPLE_CERTIFICATE" ]; then
             echo "HAS_CERT=true" >> "$GITHUB_OUTPUT"
           else
