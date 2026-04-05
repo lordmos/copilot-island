@@ -32,12 +32,23 @@ fi
 
 # ── 2. Archive ────────────────────────────────────────────────────────────────
 HAS_DEVID=false
+SIGN_IDENTITY=""
+
+# Prefer Developer ID Application (public distribution + notarization)
 if security find-identity -v -p codesigning 2>/dev/null | grep -q "Developer ID Application"; then
     HAS_DEVID=true
+    SIGN_IDENTITY="Developer ID Application"
+# Fall back to Apple Development (local testing only — triggers Gatekeeper on other Macs)
+elif security find-identity -v -p codesigning 2>/dev/null | grep -q "Apple Development"; then
+    SIGN_IDENTITY=$(security find-identity -v -p codesigning 2>/dev/null \
+        | grep "Apple Development" | head -1 | sed 's/.*"\(.*\)".*/\1/')
+    echo "⚠️  Using Apple Development cert — for local testing only."
+    echo "    For public distribution, create a 'Developer ID Application' cert at:"
+    echo "    https://developer.apple.com/account/resources/certificates/add"
 fi
 
-echo "📦 Archiving (Developer ID: $HAS_DEVID)…"
-if [ "$HAS_DEVID" = "true" ]; then
+echo "📦 Archiving (signing: ${SIGN_IDENTITY:-ad-hoc})…"
+if [ -n "$SIGN_IDENTITY" ]; then
     xcodebuild archive \
         -scheme "$SCHEME" \
         -configuration Release \
@@ -64,9 +75,12 @@ fi
 if [ "$HAS_DEVID" = "true" ]; then
     echo "🔏 Signing with Developer ID…"
     codesign --force --deep --options runtime \
-        --sign "Developer ID Application" "$APP_SRC"
+        --sign "$SIGN_IDENTITY" "$APP_SRC"
+elif [ -n "$SIGN_IDENTITY" ]; then
+    echo "🔏 Signing with Apple Development cert (local testing)…"
+    codesign --force --deep --sign "$SIGN_IDENTITY" "$APP_SRC"
 else
-    echo "🔏 Ad-hoc signing (no Developer ID found in Keychain)…"
+    echo "🔏 Ad-hoc signing (no certificate found)…"
     codesign --force --deep --sign - "$APP_SRC"
 fi
 
@@ -87,7 +101,7 @@ hdiutil create \
 rm -rf "$STAGING"
 
 if [ "$HAS_DEVID" = "true" ]; then
-    codesign --force --sign "Developer ID Application" "$FINAL_DMG"
+    codesign --force --sign "$SIGN_IDENTITY" "$FINAL_DMG"
 fi
 
 # ── 6. Notarize + Staple (requires APPLE_ID + APPLE_APP_PASSWORD + APPLE_TEAM_ID) ──
