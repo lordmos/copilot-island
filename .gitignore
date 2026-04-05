@@ -68,4 +68,3 @@ production-docs/
 
 # XcodeGen generated project (regenerate with scripts/setup.sh)
 *.xcodeproj/
-!*.xcodeproj/project.pbxproj
