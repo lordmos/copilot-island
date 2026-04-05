@@ -37,8 +37,8 @@ LOGO_COL   = "#0A1510"   # deep forest = "carved into screen" effect
 
 svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
-    <!-- Background: diagonal dark forest gradient -->
-    <linearGradient id="bggrad" x1="0.15" y1="0" x2="0.85" y2="1">
+    <!-- Background: diagonal dark forest gradient — userSpaceOnUse so notch can reuse it seamlessly -->
+    <linearGradient id="bggrad" x1="154" y1="0" x2="870" y2="1024" gradientUnits="userSpaceOnUse">
       <stop offset="0%"   stop-color="{BG_LIGHT}"/>
       <stop offset="100%" stop-color="{BG_DARK}"/>
     </linearGradient>
@@ -59,8 +59,8 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" vie
   <rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="{srx}" fill="none"
         stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
 
-  <!-- Notch pill — matches bg dark, creates a real notch illusion -->
-  <rect x="{nx}" y="{ny}" width="{nw}" height="{nh}" rx="{nrx}" fill="{NOTCH_COL}"/>
+  <!-- Notch pill — reuses same userSpaceOnUse gradient as background, blends perfectly -->
+  <rect x="{nx}" y="{ny}" width="{nw}" height="{nh}" rx="{nrx}" fill="url(#bggrad)"/>
 
   <!-- Camera LED dot inside notch -->
   <circle cx="512" cy="{cam_cy}" r="7" fill="{SCREEN_TOP}" opacity="0.6"/>

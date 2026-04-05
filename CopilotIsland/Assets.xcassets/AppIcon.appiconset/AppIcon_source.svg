@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
-    <!-- Background: diagonal dark forest gradient -->
-    <linearGradient id="bggrad" x1="0.15" y1="0" x2="0.85" y2="1">
+    <!-- Background: diagonal dark forest gradient — userSpaceOnUse so notch can reuse it seamlessly -->
+    <linearGradient id="bggrad" x1="154" y1="0" x2="870" y2="1024" gradientUnits="userSpaceOnUse">
       <stop offset="0%"   stop-color="#132018"/>
       <stop offset="100%" stop-color="#080D0B"/>
     </linearGradient>
@@ -22,8 +22,8 @@
   <rect x="108" y="210" width="808" height="600" rx="28" fill="none"
         stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
 
-  <!-- Notch pill — matches bg dark, creates a real notch illusion -->
-  <rect x="297" y="138" width="430" height="145" rx="72" fill="#080D0B"/>
+  <!-- Notch pill — reuses same userSpaceOnUse gradient as background, blends perfectly -->
+  <rect x="297" y="138" width="430" height="145" rx="72" fill="url(#bggrad)"/>
 
   <!-- Camera LED dot inside notch -->
   <circle cx="512" cy="210" r="7" fill="#6BBA94" opacity="0.6"/>

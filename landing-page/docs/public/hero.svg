@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
   <defs>
-    <!-- Diagonal dark forest gradient (matches gen_icon.py BG_LIGHT→BG_DARK) -->
-    <linearGradient id="bggrad" x1="15%" y1="0%" x2="85%" y2="100%">
+    <!-- Diagonal dark forest gradient — userSpaceOnUse so notch reuses it seamlessly -->
+    <linearGradient id="bggrad" x1="30" y1="0" x2="170" y2="200" gradientUnits="userSpaceOnUse">
       <stop offset="0%"   stop-color="#132018"/>
       <stop offset="100%" stop-color="#080D0B"/>
     </linearGradient>
@@ -22,8 +22,8 @@
   <rect x="21" y="41" width="158" height="117" rx="5.5" fill="none"
         stroke="rgba(255,255,255,0.14)" stroke-width="0.5"/>
 
-  <!-- Notch pill — dark, matches bg -->
-  <rect x="57" y="27" width="86" height="28" rx="14" fill="#080D0B"/>
+  <!-- Notch pill — reuses same userSpaceOnUse gradient, blends with background -->
+  <rect x="57" y="27" width="86" height="28" rx="14" fill="url(#bggrad)"/>
 
   <!-- Camera LED in notch -->
   <circle cx="100" cy="41" r="2.5" fill="#6BBA94" opacity="0.6"/>
