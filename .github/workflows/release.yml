@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write   # needed to create GitHub releases and upload assets
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen --quiet
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      # ── Build (unsigned, for open-source distribution) ─────────────────────
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -scheme CopilotIsland \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/CopilotIsland.xcarchive" \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -quiet
+
+      # ── Package as DMG ──────────────────────────────────────────────────────
+      - name: Package DMG
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          APP=$(find "$RUNNER_TEMP/CopilotIsland.xcarchive/Products" -name "CopilotIsland.app" | head -1)
+          if [ -z "$APP" ]; then
+            echo "❌ Could not locate CopilotIsland.app in archive"; exit 1
+          fi
+
+          mkdir -p /tmp/dmg_staging
+          cp -R "$APP" /tmp/dmg_staging/
+          ln -s /Applications /tmp/dmg_staging/Applications
+
+          hdiutil create \
+            -volname "Copilot Island ${VERSION}" \
+            -srcfolder /tmp/dmg_staging \
+            -ov -format UDRW \
+            /tmp/tmp.dmg
+
+          hdiutil convert /tmp/tmp.dmg -format UDZO \
+            -o "$RUNNER_TEMP/CopilotIsland-${VERSION}.dmg"
+
+          echo "DMG_PATH=$RUNNER_TEMP/CopilotIsland-${VERSION}.dmg" >> "$GITHUB_ENV"
+          echo "DMG_NAME=CopilotIsland-${VERSION}.dmg" >> "$GITHUB_ENV"
+
+      # ── Create GitHub Release ───────────────────────────────────────────────
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Copilot Island ${{ github.ref_name }}"
+          body: |
+            ## Copilot Island ${{ github.ref_name }}
+
+            ### Install
+            1. Download `${{ env.DMG_NAME }}` below
+            2. Open the DMG and drag **Copilot Island.app** to your Applications folder
+            3. Launch the app — it lives in your MacBook notch
+
+            > **Note:** This build is unsigned. On first launch, right-click → Open to bypass Gatekeeper.
+
+            ### Requirements
+            - macOS 14.0+ (Sonoma or later)
+            - MacBook with notch (2021 or later)
+            - GitHub Copilot CLI installed and authenticated
+
+            ### What's New
+            See [CHANGELOG](https://github.com/lordmos/copilot-island/blob/main/CHANGELOG.md) for details.
+          files: ${{ env.DMG_PATH }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
