@@ -31,33 +31,26 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" vie
       <stop offset="0%" stop-color="#8ECFAE"/>
       <stop offset="100%" stop-color="#4A9E7A"/>
     </linearGradient>
-    <!-- Mask: show screen everywhere except the notch cutout -->
-    <mask id="screenmask">
-      <rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="{srx}" fill="white"/>
-      <rect x="{nx}" y="{ny}" width="{nw}" height="{nh}" rx="{nrx}" fill="black"/>
-    </mask>
   </defs>
 
-  <!-- Dark squircle background -->
+  <!-- Black squircle background -->
   <rect width="1024" height="1024" rx="{r}" ry="{r}" fill="#0D1117"/>
 
-  <!-- Sage green screen with notch cutout (dark bg shows through notch) -->
-  <rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="{srx}" fill="url(#screenbg)" mask="url(#screenmask)"/>
+  <!-- Sage green screen (full rounded rect) -->
+  <rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="{srx}" fill="url(#screenbg)"/>
 
-  <!-- Screen border (subtle white ring) -->
+  <!-- Screen border -->
   <rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="{srx}" fill="none"
-        stroke="rgba(255,255,255,0.15)" stroke-width="2" mask="url(#screenmask)"/>
+        stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
 
-  <!-- Notch: visible as dark pill already (dark bg shows through mask) -->
-  <!-- Notch outline for subtle definition -->
-  <rect x="{nx-1}" y="{ny-1}" width="{nw+2}" height="{nh+2}" rx="{nrx+1}" fill="none"
-        stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+  <!-- Black notch pill drawn on top — matches background, creates cutout illusion -->
+  <rect x="{nx}" y="{ny}" width="{nw}" height="{nh}" rx="{nrx}" fill="#0D1117"/>
 
-  <!-- Green camera LED dot in notch -->
+  <!-- Green camera LED dot inside notch -->
   <circle cx="512" cy="{cam_cy}" r="5" fill="#5EC995" opacity="0.85"/>
   <circle cx="512" cy="{cam_cy}" r="2" fill="#A8F0CC"/>
 
-  <!-- Copilot logo centered on green screen (white for strong contrast) -->
+  <!-- White Copilot logo centered on screen -->
   <g transform="translate({logo_x:.1f},{logo_y:.1f}) scale({logo_scale:.3f})" fill="white" opacity="0.92">
     <path d="{path1}"/>
     <path d="{path2}"/>
