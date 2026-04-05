@@ -82,12 +82,13 @@ jobs:
           HAS_CERT: ${{ steps.check_cert.outputs.HAS_CERT }}
         run: |
           if [ "$HAS_CERT" = "true" ]; then
-            # Signed build with Developer ID
+            # Signed build with Developer ID + Hardened Runtime (required for notarization)
             xcodebuild archive \
               -scheme CopilotIsland \
               -configuration Release \
               -archivePath "$RUNNER_TEMP/CopilotIsland.xcarchive" \
-              "OTHER_CODE_SIGN_FLAGS=--keychain $KEYCHAIN_PATH" \
+              "OTHER_CODE_SIGN_FLAGS=--keychain $KEYCHAIN_PATH --timestamp" \
+              ENABLE_HARDENED_RUNTIME=YES \
               -quiet
           else
             # Ad-hoc signed build (no Developer ID)
@@ -129,7 +130,7 @@ jobs:
             "$DMG_PATH"
 
           if [ "$HAS_CERT" = "true" ]; then
-            codesign --force --sign "Developer ID Application" "$DMG_PATH"
+            codesign --force --sign "Developer ID Application" --timestamp "$DMG_PATH"
           fi
 
           echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
