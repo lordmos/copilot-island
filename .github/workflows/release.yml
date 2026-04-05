@@ -25,20 +25,66 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
-      # ── Build (unsigned, for open-source distribution) ─────────────────────
-      - name: Archive
+      # ── Import Developer ID certificate from GitHub Secrets ─────────────────
+      # Required secrets:
+      #   APPLE_CERTIFICATE          — base64-encoded .p12 (Developer ID Application)
+      #   APPLE_CERTIFICATE_PASSWORD — .p12 export password
+      #   APPLE_TEAM_ID              — 10-character Apple Team ID
+      #   APPLE_ID                   — Apple ID email (for notarytool)
+      #   APPLE_APP_PASSWORD         — App-Specific Password from appleid.apple.com
+      - name: Import certificate
+        if: ${{ env.HAS_CERT == 'true' }}
+        env:
+          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
         run: |
-          xcodebuild archive \
-            -scheme CopilotIsland \
-            -configuration Release \
-            -archivePath "$RUNNER_TEMP/CopilotIsland.xcarchive" \
-            CODE_SIGN_IDENTITY="-" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            -quiet
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          echo "$APPLE_CERTIFICATE" | base64 --decode -o "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
 
-      # ── Package as DMG ──────────────────────────────────────────────────────
+      # ── Archive ─────────────────────────────────────────────────────────────
+      - name: Archive
+        env:
+          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
+        run: |
+          if [ "$HAS_CERT" = "true" ]; then
+            # Signed build with Developer ID
+            xcodebuild archive \
+              -scheme CopilotIsland \
+              -configuration Release \
+              -archivePath "$RUNNER_TEMP/CopilotIsland.xcarchive" \
+              "OTHER_CODE_SIGN_FLAGS=--keychain $KEYCHAIN_PATH" \
+              -quiet
+          else
+            # Ad-hoc signed build (no Developer ID)
+            xcodebuild archive \
+              -scheme CopilotIsland \
+              -configuration Release \
+              -archivePath "$RUNNER_TEMP/CopilotIsland.xcarchive" \
+              CODE_SIGN_IDENTITY="-" \
+              CODE_SIGNING_REQUIRED=YES \
+              CODE_SIGNING_ALLOWED=YES \
+              -quiet
+          fi
+
+      # ── Package DMG ─────────────────────────────────────────────────────────
       - name: Package DMG
+        env:
+          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
           APP=$(find "$RUNNER_TEMP/CopilotIsland.xcarchive/Products" -name "CopilotIsland.app" | head -1)
@@ -46,19 +92,43 @@ jobs:
             echo "❌ Could not locate CopilotIsland.app in archive"; exit 1
           fi
 
+          if [ "$HAS_CERT" != "true" ]; then
+            codesign --force --deep --sign - "$APP"
+          fi
+
+          DMG_PATH="$RUNNER_TEMP/CopilotIsland-${VERSION}.dmg"
           mkdir -p /tmp/dmg_staging
           cp -R "$APP" /tmp/dmg_staging/
           ln -s /Applications /tmp/dmg_staging/Applications
 
-          # Single-step UDZO (compressed) DMG — avoids hdiutil convert resource lock
           hdiutil create \
             -volname "Copilot Island ${VERSION}" \
             -srcfolder /tmp/dmg_staging \
             -ov -format UDZO \
-            "$RUNNER_TEMP/CopilotIsland-${VERSION}.dmg"
+            "$DMG_PATH"
 
-          echo "DMG_PATH=$RUNNER_TEMP/CopilotIsland-${VERSION}.dmg" >> "$GITHUB_ENV"
+          if [ "$HAS_CERT" = "true" ]; then
+            codesign --force --sign "Developer ID Application" "$DMG_PATH"
+          fi
+
+          echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
           echo "DMG_NAME=CopilotIsland-${VERSION}.dmg" >> "$GITHUB_ENV"
+
+      # ── Notarize + Staple (only when Developer ID cert is present) ───────────
+      - name: Notarize DMG
+        if: ${{ env.HAS_CERT == 'true' }}
+        env:
+          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_APP_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait
+          xcrun stapler staple "$DMG_PATH"
 
       # ── Create GitHub Release ───────────────────────────────────────────────
       - name: Create Release
@@ -71,9 +141,7 @@ jobs:
             ### Install
             1. Download `${{ env.DMG_NAME }}` below
             2. Open the DMG and drag **Copilot Island.app** to your Applications folder
-            3. Launch the app — it lives in your MacBook notch
-
-            > **Note:** This build is unsigned. On first launch, right-click → Open to bypass Gatekeeper.
+            3. Launch — the app lives in your MacBook notch ✨
 
             ### Requirements
             - macOS 14.0+ (Sonoma or later)
