@@ -215,15 +215,67 @@ private struct AssistantMessageBubble: View {
 private struct ToolResultCard: View {
     let message: CopilotMessage
     @State private var expanded = false
+    @State private var showFullResult = false
 
     private var toolLabel: String { message.toolName ?? "tool" }
     private var success: Bool { message.toolSuccess ?? true }
-    private var trimmedContent: String { message.content.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var isLong: Bool { trimmedContent.count > 300 }
+
+    // Parse JSON arguments into key-value pairs
+    private var parsedArgs: [(key: String, value: String)] {
+        guard let raw = message.toolArguments, !raw.isEmpty, raw != "{}" else { return [] }
+        guard let data = raw.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return [("args", raw)]
+        }
+        return obj.map { k, v -> (String, String) in
+            let valStr: String
+            if let s = v as? String { valStr = s }
+            else if let n = v as? NSNumber { valStr = n.stringValue }
+            else { valStr = "\(v)" }
+            return (k, valStr)
+        }.sorted { $0.0 < $1.0 }
+    }
+
+    // Header preview: first arg value (e.g. path, command)
+    private var argsPreview: String? {
+        guard let first = parsedArgs.first else { return nil }
+        let prioritized = parsedArgs.first { ["path", "command", "file", "query"].contains($0.key) }
+            ?? parsedArgs.first
+        let val = prioritized?.value ?? first.value
+        return val.count > 48 ? "…" + val.suffix(45) : val
+    }
+
+    // Format result content
+    private enum ParsedResult {
+        case empty
+        case keyValue([(String, String)])
+        case array([String])
+        case text(String)
+    }
+
+    private var parsedResult: ParsedResult {
+        let trimmed = message.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty && trimmed != "{}" else { return .empty }
+        if let data = trimmed.data(using: .utf8),
+           let obj = try? JSONSerialization.jsonObject(with: data) {
+            if let dict = obj as? [String: Any] {
+                let pairs = dict.map { k, v -> (String, String) in
+                    if let s = v as? String { return (k, s) }
+                    if let n = v as? NSNumber { return (k, n.stringValue) }
+                    return (k, "\(v)")
+                }.sorted { $0.0 < $1.0 }
+                return .keyValue(pairs)
+            }
+            if let arr = obj as? [Any] {
+                return .array(arr.map { "\($0)" })
+            }
+        }
+        return .text(trimmed)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header row
+            // Header row (always visible, tap to expand)
             Button(action: { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } }) {
                 HStack(spacing: 6) {
                     Image(systemName: success ? "checkmark.circle.fill" : "xmark.circle.fill")
@@ -232,33 +284,39 @@ private struct ToolResultCard: View {
 
                     Text(toolLabel)
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundColor(CopilotTheme.textSecondary)
+                        .foregroundColor(CopilotTheme.sagePrimary)
+
+                    if let preview = argsPreview {
+                        Text(preview)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(CopilotTheme.textTertiary)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
 
                     Spacer()
 
-                    if !trimmedContent.isEmpty {
-                        Image(systemName: expanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 9))
-                            .foregroundColor(CopilotTheme.textTertiary)
-                    }
+                    Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 9))
+                        .foregroundColor(CopilotTheme.textTertiary)
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
             }
             .buttonStyle(.plain)
 
-            // Expandable result
-            if expanded && !trimmedContent.isEmpty {
+            // Expanded detail pane
+            if expanded {
                 Divider().background(CopilotTheme.border.opacity(0.5))
-                ScrollView {
-                    Text(isLong && !expanded ? String(trimmedContent.prefix(300)) + "…" : trimmedContent)
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundColor(CopilotTheme.textSecondary)
-                        .textSelection(.enabled)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(8)
+                VStack(alignment: .leading, spacing: 8) {
+                    // Arguments section
+                    if !parsedArgs.isEmpty {
+                        argsSectionView
+                    }
+                    // Result section
+                    resultSectionView
                 }
-                .frame(maxHeight: 140)
+                .padding(10)
             }
         }
         .background(Color.black.opacity(0.25))
@@ -271,6 +329,133 @@ private struct ToolResultCard: View {
                 )
         )
         .padding(.leading, 26)
+    }
+
+    // MARK: Arguments Section
+
+    @ViewBuilder
+    private var argsSectionView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("ARGS")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundColor(CopilotTheme.textTertiary)
+                .tracking(0.8)
+
+            VStack(alignment: .leading, spacing: 3) {
+                ForEach(parsedArgs.prefix(6), id: \.key) { key, value in
+                    HStack(alignment: .top, spacing: 4) {
+                        Text(key)
+                            .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                            .foregroundColor(CopilotTheme.sagePrimary.opacity(0.8))
+                            .frame(minWidth: 40, alignment: .leading)
+                        Text(value.count > 120 ? String(value.prefix(117)) + "…" : value)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(CopilotTheme.textSecondary)
+                            .textSelection(.enabled)
+                            .lineLimit(3)
+                    }
+                }
+            }
+            .padding(6)
+            .background(CopilotTheme.sagePrimary.opacity(0.04))
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+        }
+    }
+
+    // MARK: Result Section
+
+    @ViewBuilder
+    private var resultSectionView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("OUTPUT")
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundColor(CopilotTheme.textTertiary)
+                .tracking(0.8)
+
+            switch parsedResult {
+            case .empty:
+                Text("(no output)")
+                    .font(.system(size: 10))
+                    .foregroundColor(CopilotTheme.textTertiary)
+
+            case .keyValue(let pairs):
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(pairs.prefix(showFullResult ? 50 : 8), id: \.0) { key, value in
+                        HStack(alignment: .top, spacing: 4) {
+                            Text(key)
+                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                .foregroundColor(CopilotTheme.sagePrimary.opacity(0.8))
+                                .frame(minWidth: 40, alignment: .leading)
+                            Text(value.count > 160 ? String(value.prefix(157)) + "…" : value)
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundColor(CopilotTheme.textSecondary)
+                                .textSelection(.enabled)
+                                .lineLimit(4)
+                        }
+                    }
+                    if pairs.count > 8 && !showFullResult {
+                        showMoreButton(remaining: pairs.count - 8)
+                    }
+                }
+                .padding(6)
+                .background(Color.black.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+
+            case .array(let items):
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach((showFullResult ? items : Array(items.prefix(6))).indices, id: \.self) { i in
+                        HStack(spacing: 4) {
+                            Text("•")
+                                .font(.system(size: 10))
+                                .foregroundColor(CopilotTheme.sagePrimary.opacity(0.6))
+                            Text(items[i].count > 100 ? String(items[i].prefix(97)) + "…" : items[i])
+                                .font(.system(size: 10, design: .monospaced))
+                                .foregroundColor(CopilotTheme.textSecondary)
+                                .textSelection(.enabled)
+                                .lineLimit(2)
+                        }
+                    }
+                    if items.count > 6 && !showFullResult {
+                        showMoreButton(remaining: items.count - 6)
+                    }
+                }
+                .padding(6)
+                .background(Color.black.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+
+            case .text(let raw):
+                let lines = raw.components(separatedBy: "\n")
+                let displayed = showFullResult ? raw : lines.prefix(8).joined(separator: "\n")
+                VStack(alignment: .leading, spacing: 4) {
+                    ScrollView {
+                        Text(displayed)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(CopilotTheme.textSecondary)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(maxHeight: showFullResult ? 200 : 120)
+
+                    if lines.count > 8 && !showFullResult {
+                        showMoreButton(remaining: lines.count - 8)
+                    }
+                }
+                .padding(6)
+                .background(Color.black.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func showMoreButton(remaining: Int) -> some View {
+        Button(action: { withAnimation { showFullResult = true } }) {
+            Text("Show \(remaining) more…")
+                .font(.system(size: 9, weight: .medium))
+                .foregroundColor(CopilotTheme.sagePrimary)
+        }
+        .buttonStyle(.plain)
+        .padding(.top, 2)
     }
 }
 

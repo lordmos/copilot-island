@@ -48,6 +48,7 @@ actor SessionStore {
                     role: .user,
                     content: content,
                     toolName: nil,
+                    toolArguments: nil,
                     toolSuccess: nil,
                     timestamp: Date()
                 ))
@@ -69,6 +70,7 @@ actor SessionStore {
                         role: .assistant,
                         content: content,
                         toolName: nil,
+                        toolArguments: nil,
                         toolSuccess: nil,
                         timestamp: Date()
                     ))
@@ -90,6 +92,7 @@ actor SessionStore {
         case .toolCompleted(let sessionId, let toolCallId, let success, let result):
             update(sessionId) { state in
                 let toolName = state.currentTool?.toolName  // capture before nil
+                let toolArgs = state.currentTool?.arguments // capture before nil
                 state.currentTool = nil
                 state.phase = .processing
                 state.lastActivity = Date()
@@ -98,6 +101,7 @@ actor SessionStore {
                     role: .tool,
                     content: result,
                     toolName: toolName,
+                    toolArguments: toolArgs,
                     toolSuccess: success,
                     timestamp: Date()
                 ))

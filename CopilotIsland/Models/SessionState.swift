@@ -92,6 +92,7 @@ struct CopilotMessage: Equatable, Identifiable, Sendable {
     let role: MessageRole
     let content: String
     let toolName: String?
+    let toolArguments: String?
     let toolSuccess: Bool?
     let timestamp: Date
 
