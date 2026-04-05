@@ -12,10 +12,10 @@ sw, sh = 808, 600  # screen width, height
 sx, sy = 108, 210  # screen top-left
 srx = 28          # screen corner radius
 
-nw, nh = 430, 145  # notch pill
-nrx = nh // 2      # = 72 (full pill)
-nx = 512 - nw // 2   # = 297 (horizontally centered)
-ny = sy             # notch top aligns with screen top edge, cuts downward
+nw, nh = 430, 145  # notch dimensions
+nbcr = 55          # bottom corner radius only (top edge is flat/straight)
+nx = 512 - nw // 2   # = 297 (horizontally centred)
+ny = sy             # notch top flush with screen top edge, cuts downward
 cam_cy = ny + nh // 2  # = 282 (centre of notch)
 
 notch_bottom = ny + nh    # = 355
@@ -25,6 +25,18 @@ logo_size = 370
 logo_scale = logo_size / 16   # ≈ 23.125
 logo_x = 512 - logo_size / 2  # = 327
 logo_y = logo_center_y - logo_size / 2  # ≈ 397
+
+# Notch path: flat top, rounded bottom-left and bottom-right corners
+# M top-left → top-right → straight down → arc bottom-right → bottom-left → arc bottom-left → close
+notch_path = (
+    f"M {nx},{ny} "
+    f"H {nx+nw} "
+    f"V {ny+nh-nbcr} "
+    f"Q {nx+nw},{ny+nh} {nx+nw-nbcr},{ny+nh} "
+    f"H {nx+nbcr} "
+    f"Q {nx},{ny+nh} {nx},{ny+nh-nbcr} "
+    f"Z"
+)
 
 # ── Colours ───────────────────────────────────────────────────────────────────
 # Background: subtle diagonal gradient from deep forest-teal to near-black
@@ -59,8 +71,8 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" vie
   <rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="{srx}" fill="none"
         stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
 
-  <!-- Notch pill — pure black, top-aligned with screen, cuts downward -->
-  <rect x="{nx}" y="{ny}" width="{nw}" height="{nh}" rx="{nrx}" fill="#000000"/>
+  <!-- Notch: flat top flush with screen, rounded bottom corners — real MacBook notch shape -->
+  <path d="{notch_path}" fill="#000000"/>
 
   <!-- Camera LED dot inside notch -->
   <circle cx="512" cy="{cam_cy}" r="7" fill="{SCREEN_TOP}" opacity="0.6"/>

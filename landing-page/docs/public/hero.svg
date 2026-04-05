@@ -22,8 +22,8 @@
   <rect x="21" y="41" width="158" height="117" rx="5.5" fill="none"
         stroke="rgba(255,255,255,0.14)" stroke-width="0.5"/>
 
-  <!-- Notch pill — pure black, top-aligned with screen top edge -->
-  <rect x="57" y="41" width="86" height="28" rx="14" fill="#000000"/>
+  <!-- Notch: flat top flush with screen top, rounded bottom corners — real MacBook notch shape -->
+  <path d="M 57,41 H 143 V 58 Q 143,69 132,69 H 68 Q 57,69 57,58 Z" fill="#000000"/>
 
   <!-- Camera LED in notch -->
   <circle cx="100" cy="55" r="2.5" fill="#6BBA94" opacity="0.6"/>
