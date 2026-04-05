@@ -145,11 +145,25 @@ jobs:
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          xcrun notarytool submit "$DMG_PATH" \
+          SUBMISSION_OUTPUT=$(xcrun notarytool submit "$DMG_PATH" \
             --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_PASSWORD" \
             --team-id "$APPLE_TEAM_ID" \
-            --wait
+            --wait \
+            --output-format json 2>&1)
+          echo "$SUBMISSION_OUTPUT"
+          STATUS=$(echo "$SUBMISSION_OUTPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('status','unknown'))" 2>/dev/null || echo "unknown")
+          SUBMISSION_ID=$(echo "$SUBMISSION_OUTPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('id',''))" 2>/dev/null || echo "")
+          if [ "$STATUS" != "Accepted" ]; then
+            echo "❌ Notarization status: $STATUS — fetching Apple rejection log..."
+            if [ -n "$SUBMISSION_ID" ]; then
+              xcrun notarytool log "$SUBMISSION_ID" \
+                --apple-id "$APPLE_ID" \
+                --password "$APPLE_APP_PASSWORD" \
+                --team-id "$APPLE_TEAM_ID" 2>&1 || true
+            fi
+            exit 1
+          fi
           xcrun stapler staple "$DMG_PATH"
 
       # ── Create GitHub Release ───────────────────────────────────────────────
