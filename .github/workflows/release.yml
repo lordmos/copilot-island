@@ -33,9 +33,8 @@ jobs:
       #   APPLE_ID                   — Apple ID email (for notarytool)
       #   APPLE_APP_PASSWORD         — App-Specific Password from appleid.apple.com
       - name: Import certificate
-        if: ${{ env.HAS_CERT == 'true' }}
+        if: ${{ secrets.APPLE_CERTIFICATE != '' }}
         env:
-          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
         run: |
@@ -116,9 +115,8 @@ jobs:
 
       # ── Notarize + Staple (only when Developer ID cert is present) ───────────
       - name: Notarize DMG
-        if: ${{ env.HAS_CERT == 'true' }}
+        if: ${{ secrets.APPLE_CERTIFICATE != '' }}
         env:
-          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
