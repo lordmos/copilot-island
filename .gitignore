@@ -1,0 +1,71 @@
+# CopilotIsland .gitignore
+
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+*.xccheckout
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Build outputs
+*.app
+*.dmg
+*.pkg
+*.xcarchive
+dist/
+
+# Signing
+*.p12
+*.cer
+*.mobileprovision
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node.js (landing page)
+landing-page/node_modules/
+landing-page/docs/.vitepress/dist/
+landing-page/docs/.vitepress/cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+claude-island-main/
+
+# Internal planning docs (not for public repo)
+production-docs/
+
+# XcodeGen generated project (regenerate with scripts/setup.sh)
+*.xcodeproj/
+!*.xcodeproj/project.pbxproj

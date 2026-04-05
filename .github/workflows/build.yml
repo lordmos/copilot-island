@@ -1,0 +1,53 @@
+name: CI Build
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        run: xcodegen generate
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -scheme CopilotIsland \
+            -configuration Release \
+            -destination 'platform=macOS' \
+            build | xcpretty
+
+      - name: Archive for Release
+        if: github.ref == 'refs/heads/main'
+        run: |
+          xcodebuild \
+            -scheme CopilotIsland \
+            -configuration Release \
+            -archivePath ./CopilotIsland.xcarchive \
+            archive | xcpretty
+
+      - name: Export .app
+        if: github.ref == 'refs/heads/main'
+        run: |
+          xcodebuild \
+            -exportArchive \
+            -archivePath ./CopilotIsland.xcarchive \
+            -exportPath ./dist \
+            -exportOptionsPlist scripts/ExportOptions.plist
+
+      - name: Upload artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: CopilotIsland-${{ github.sha }}
+          path: dist/CopilotIsland.app
