@@ -99,7 +99,7 @@ struct ChatHistoryView: View {
                         proxy.scrollTo(last.id, anchor: .bottom)
                     }
                 }
-                .onChange(of: session.messages.count) { _ in
+                .onChange(of: session.messages.count) { _, _ in
                     if let last = session.messages.last {
                         withAnimation(.easeOut(duration: 0.2)) {
                             proxy.scrollTo(last.id, anchor: .bottom)
@@ -217,7 +217,6 @@ private struct AssistantMessageBubble: View {
 private struct ToolResultCard: View {
     let message: CopilotMessage
     @State private var expanded = false
-    @State private var showFullResult = false
 
     private var toolLabel: String { message.toolName ?? "tool" }
     private var success: Bool { message.toolSuccess ?? true }
@@ -277,35 +276,36 @@ private struct ToolResultCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header row (always visible, tap to expand)
-            Button(action: { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } }) {
-                HStack(spacing: 6) {
-                    Image(systemName: success ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(success ? CopilotTheme.successGreen : CopilotTheme.warningRed)
+            // Header row — entire row is tappable
+            HStack(spacing: 6) {
+                Image(systemName: success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(success ? CopilotTheme.successGreen : CopilotTheme.warningRed)
 
-                    Text(toolLabel)
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundColor(CopilotTheme.sagePrimary)
+                Text(toolLabel)
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundColor(CopilotTheme.sagePrimary)
 
-                    if let preview = argsPreview {
-                        Text(preview)
-                            .font(.system(size: 10, design: .monospaced))
-                            .foregroundColor(CopilotTheme.textTertiary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: expanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 9))
+                if let preview = argsPreview {
+                    Text(preview)
+                        .font(.system(size: 10, design: .monospaced))
                         .foregroundColor(CopilotTheme.textTertiary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
+
+                Spacer()
+
+                Image(systemName: expanded ? "chevron.up" : "chevron.down")
+                    .font(.system(size: 9))
+                    .foregroundColor(CopilotTheme.textTertiary)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+            }
 
             // Expanded detail pane
             if expanded {
@@ -343,18 +343,17 @@ private struct ToolResultCard: View {
                 .foregroundColor(CopilotTheme.textTertiary)
                 .tracking(0.8)
 
-            VStack(alignment: .leading, spacing: 3) {
-                ForEach(parsedArgs.prefix(6), id: \.key) { key, value in
-                    HStack(alignment: .top, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(parsedArgs, id: \.key) { key, value in
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(key)
                             .font(.system(size: 10, weight: .semibold, design: .monospaced))
                             .foregroundColor(CopilotTheme.sagePrimary.opacity(0.8))
-                            .frame(minWidth: 40, alignment: .leading)
-                        Text(value.count > 120 ? String(value.prefix(117)) + "…" : value)
+                        Text(value)
                             .font(.system(size: 10, design: .monospaced))
                             .foregroundColor(CopilotTheme.textSecondary)
                             .textSelection(.enabled)
-                            .lineLimit(3)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
             }
@@ -381,22 +380,22 @@ private struct ToolResultCard: View {
                     .foregroundColor(CopilotTheme.textTertiary)
 
             case .keyValue(let pairs):
-                VStack(alignment: .leading, spacing: 3) {
-                    ForEach(pairs.prefix(showFullResult ? 50 : 8), id: \.0) { key, value in
-                        HStack(alignment: .top, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(pairs, id: \.0) { key, value in
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(key)
                                 .font(.system(size: 10, weight: .semibold, design: .monospaced))
                                 .foregroundColor(CopilotTheme.sagePrimary.opacity(0.8))
-                                .frame(minWidth: 40, alignment: .leading)
-                            Text(value.count > 160 ? String(value.prefix(157)) + "…" : value)
-                                .font(.system(size: 10, design: .monospaced))
-                                .foregroundColor(CopilotTheme.textSecondary)
-                                .textSelection(.enabled)
-                                .lineLimit(4)
+                            if looksLikeMarkdown(value) {
+                                MarkdownMessageView(text: value)
+                            } else {
+                                Text(value)
+                                    .font(.system(size: 10, design: .monospaced))
+                                    .foregroundColor(CopilotTheme.textSecondary)
+                                    .textSelection(.enabled)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
-                    }
-                    if pairs.count > 8 && !showFullResult {
-                        showMoreButton(remaining: pairs.count - 8)
                     }
                 }
                 .padding(6)
@@ -404,21 +403,18 @@ private struct ToolResultCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: 4))
 
             case .array(let items):
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach((showFullResult ? items : Array(items.prefix(6))).indices, id: \.self) { i in
-                        HStack(spacing: 4) {
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(items.indices, id: \.self) { i in
+                        HStack(alignment: .top, spacing: 4) {
                             Text("•")
                                 .font(.system(size: 10))
                                 .foregroundColor(CopilotTheme.sagePrimary.opacity(0.6))
-                            Text(items[i].count > 100 ? String(items[i].prefix(97)) + "…" : items[i])
+                            Text(items[i])
                                 .font(.system(size: 10, design: .monospaced))
                                 .foregroundColor(CopilotTheme.textSecondary)
                                 .textSelection(.enabled)
-                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
-                    }
-                    if items.count > 6 && !showFullResult {
-                        showMoreButton(remaining: items.count - 6)
                     }
                 }
                 .padding(6)
@@ -426,38 +422,32 @@ private struct ToolResultCard: View {
                 .clipShape(RoundedRectangle(cornerRadius: 4))
 
             case .text(let raw):
-                let lines = raw.components(separatedBy: "\n")
-                let displayed = showFullResult ? raw : lines.prefix(8).joined(separator: "\n")
-                VStack(alignment: .leading, spacing: 4) {
+                if looksLikeMarkdown(raw) {
+                    MarkdownMessageView(text: raw)
+                        .padding(6)
+                        .background(Color.black.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                } else {
                     ScrollView {
-                        Text(displayed)
+                        Text(raw)
                             .font(.system(size: 10, design: .monospaced))
                             .foregroundColor(CopilotTheme.textSecondary)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .frame(maxHeight: showFullResult ? 200 : 120)
-
-                    if lines.count > 8 && !showFullResult {
-                        showMoreButton(remaining: lines.count - 8)
-                    }
+                    .frame(maxHeight: 320)
+                    .padding(6)
+                    .background(Color.black.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
                 }
-                .padding(6)
-                .background(Color.black.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: 4))
             }
         }
     }
 
-    @ViewBuilder
-    private func showMoreButton(remaining: Int) -> some View {
-        Button(action: { withAnimation { showFullResult = true } }) {
-            Text("Show \(remaining) more…")
-                .font(.system(size: 9, weight: .medium))
-                .foregroundColor(CopilotTheme.sagePrimary)
-        }
-        .buttonStyle(.plain)
-        .padding(.top, 2)
+    /// Heuristic: content contains common markdown markers
+    private func looksLikeMarkdown(_ text: String) -> Bool {
+        let markers = ["# ", "## ", "**", "```", "- [", "> ", "| ", "* ", "1. "]
+        return markers.contains { text.contains($0) }
     }
 }
-
