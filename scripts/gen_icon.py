@@ -57,8 +57,8 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" vie
   <circle cx="512" cy="{cam_cy}" r="5" fill="#5EC995" opacity="0.85"/>
   <circle cx="512" cy="{cam_cy}" r="2" fill="#A8F0CC"/>
 
-  <!-- Copilot logo centered on green screen (dark, high contrast) -->
-  <g transform="translate({logo_x:.1f},{logo_y:.1f}) scale({logo_scale:.3f})" fill="#0D1117" opacity="0.82">
+  <!-- Copilot logo centered on green screen (white for strong contrast) -->
+  <g transform="translate({logo_x:.1f},{logo_y:.1f}) scale({logo_scale:.3f})" fill="white" opacity="0.92">
     <path d="{path1}"/>
     <path d="{path2}"/>
   </g>
