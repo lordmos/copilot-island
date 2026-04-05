@@ -14,7 +14,7 @@ class WindowManager {
         self.sessionMonitor = sessionMonitor
     }
 
-    func createNotchWindow() {
+    @MainActor func createNotchWindow() {
         guard let screen = NSScreen.main else { return }
         guard let notchRect = screen.notchRect else { return }
 

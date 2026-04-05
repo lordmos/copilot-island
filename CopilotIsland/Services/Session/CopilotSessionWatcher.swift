@@ -44,7 +44,7 @@ actor CopilotSessionWatcher {
     private func watchDirectory() {
         dirFD = open(stateDir.path, O_EVTONLY)
         guard dirFD >= 0 else {
-            logger.error("Failed to open session-state dir: \(stateDir.path)")
+            logger.error("Failed to open session-state dir: \(self.stateDir.path)")
             return
         }
 

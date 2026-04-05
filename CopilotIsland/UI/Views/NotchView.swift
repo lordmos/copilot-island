@@ -87,7 +87,7 @@ struct NotchView: View {
             .clipShape(NotchShape(topRadius: 19, bottomRadius: 24))
             .overlay(
                 NotchShape(topRadius: 19, bottomRadius: 24)
-                    .strokeBorder(CopilotTheme.border, lineWidth: 0.5)
+                    .stroke(CopilotTheme.border, lineWidth: 0.5)
             )
             .shadow(color: .black.opacity(0.6), radius: 20, y: 8)
             .frame(width: viewModel.openedSize.width, height: viewModel.openedSize.height)

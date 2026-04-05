@@ -11,8 +11,7 @@ class NotchWindow: NSWindow {
             contentRect: contentRect,
             styleMask: [.borderless, .fullSizeContentView],
             backing: .buffered,
-            defer: false,
-            screen: screen
+            defer: false
         )
         level = .screenSaver
         backgroundColor = .clear
