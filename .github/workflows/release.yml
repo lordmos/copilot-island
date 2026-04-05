@@ -25,15 +25,26 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
-      # ── Import Developer ID certificate from GitHub Secrets ─────────────────
-      # Required secrets:
+      # ── Detect certificate availability ─────────────────────────────────────
+      # Required secrets for full signing + notarization:
       #   APPLE_CERTIFICATE          — base64-encoded .p12 (Developer ID Application)
       #   APPLE_CERTIFICATE_PASSWORD — .p12 export password
       #   APPLE_TEAM_ID              — 10-character Apple Team ID
       #   APPLE_ID                   — Apple ID email (for notarytool)
       #   APPLE_APP_PASSWORD         — App-Specific Password from appleid.apple.com
+      - name: Check certificate
+        id: check_cert
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+        run: |
+          if [ -n "$APPLE_CERTIFICATE" ]; then
+            echo "HAS_CERT=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "HAS_CERT=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Import certificate
-        if: ${{ secrets.APPLE_CERTIFICATE != '' }}
+        if: steps.check_cert.outputs.HAS_CERT == 'true'
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -57,7 +68,7 @@ jobs:
       # ── Archive ─────────────────────────────────────────────────────────────
       - name: Archive
         env:
-          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
+          HAS_CERT: ${{ steps.check_cert.outputs.HAS_CERT }}
         run: |
           if [ "$HAS_CERT" = "true" ]; then
             # Signed build with Developer ID
@@ -82,7 +93,7 @@ jobs:
       # ── Package DMG ─────────────────────────────────────────────────────────
       - name: Package DMG
         env:
-          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
+          HAS_CERT: ${{ steps.check_cert.outputs.HAS_CERT }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           VERSION="${{ steps.version.outputs.VERSION }}"
@@ -115,7 +126,7 @@ jobs:
 
       # ── Notarize + Staple (only when Developer ID cert is present) ───────────
       - name: Notarize DMG
-        if: ${{ secrets.APPLE_CERTIFICATE != '' }}
+        if: steps.check_cert.outputs.HAS_CERT == 'true'
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
