@@ -9,46 +9,51 @@ path2 = "M6.25 9.037a.75.75 0 0 1 .75.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0
 # Design: Dark squircle background + sage green screen with notch cutout + dark Copilot logo
 r = 230          # squircle background corner radius
 sw, sh = 808, 600  # screen width, height
-sx, sy = 108, 200  # screen top-left (moved down to give notch more room)
+sx, sy = 108, 210  # screen top-left
 srx = 24         # screen corner radius
-nw, nh = 380, 80 # notch pill — much larger to convey "notch app" concept
-nrx = nh // 2    # = 40 (full pill)
+nw, nh = 380, 110 # notch pill — tall & wide to convey "notch app" concept
+nrx = nh // 2    # = 55 (full pill)
 nx = 512 - nw // 2   # = 322 (notch left)
-ny = sy - nh // 2    # = 160 (notch top, centered on screen top edge)
-cam_cy = ny + nh // 2  # = 200 (notch center = screen top edge)
+ny = sy - nh // 2    # = 155 (notch top, centered on screen top edge)
+cam_cy = ny + nh // 2  # = 210 (notch center = screen top edge)
 # Logo centered on usable screen area (below notch bottom)
-notch_bottom = ny + nh    # = 240
-screen_bottom = sy + sh   # = 800
-logo_center_y = (notch_bottom + screen_bottom) / 2  # = 520
-logo_size = 380
-logo_scale = logo_size / 16   # = 23.75
-logo_x = 512 - logo_size / 2  # = 322
-logo_y = logo_center_y - logo_size / 2  # = 330
+notch_bottom = ny + nh    # = 265
+screen_bottom = sy + sh   # = 810
+logo_center_y = (notch_bottom + screen_bottom) / 2  # = 537.5
+logo_size = 370
+logo_scale = logo_size / 16   # ≈ 23.125
+logo_x = 512 - logo_size / 2  # = 327
+logo_y = logo_center_y - logo_size / 2  # = 352.5
+
+# App theme colors (from CopilotTheme.swift)
+BG_COLOR    = "#0D1412"   # background: Color(r:0.05,g:0.08,b:0.07)
+SCREEN_TOP  = "#6BBA94"   # sagePrimary: Color(r:0.42,g:0.73,b:0.58)
+SCREEN_BOT  = "#388569"   # sageDeep:   Color(r:0.22,g:0.52,b:0.41)
 
 svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
     <linearGradient id="screenbg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#8ECFAE"/>
-      <stop offset="100%" stop-color="#4A9E7A"/>
+      <stop offset="0%" stop-color="{SCREEN_TOP}"/>
+      <stop offset="100%" stop-color="{SCREEN_BOT}"/>
     </linearGradient>
   </defs>
 
-  <!-- Black squircle background -->
-  <rect width="1024" height="1024" rx="{r}" ry="{r}" fill="#0D1117"/>
+  <!-- App-theme dark green-black squircle background -->
+  <rect width="1024" height="1024" rx="{r}" ry="{r}" fill="{BG_COLOR}"/>
 
-  <!-- Sage green screen (full rounded rect) -->
+  <!-- Sage green screen (sagePrimary → sageDeep gradient) -->
   <rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="{srx}" fill="url(#screenbg)"/>
 
-  <!-- Screen border -->
+  <!-- Screen border — subtle white ring -->
   <rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="{srx}" fill="none"
         stroke="rgba(255,255,255,0.18)" stroke-width="2"/>
 
-  <!-- Black notch pill drawn on top — matches background, creates cutout illusion -->
-  <rect x="{nx}" y="{ny}" width="{nw}" height="{nh}" rx="{nrx}" fill="#0D1117"/>
+  <!-- Notch pill — same color as background, creates cutout illusion -->
+  <rect x="{nx}" y="{ny}" width="{nw}" height="{nh}" rx="{nrx}" fill="{BG_COLOR}"/>
 
   <!-- Green camera LED dot inside notch -->
-  <circle cx="512" cy="{cam_cy}" r="5" fill="#5EC995" opacity="0.85"/>
-  <circle cx="512" cy="{cam_cy}" r="2" fill="#A8F0CC"/>
+  <circle cx="512" cy="{cam_cy}" r="7" fill="{SCREEN_TOP}" opacity="0.7"/>
+  <circle cx="512" cy="{cam_cy}" r="3" fill="#A8F0CC"/>
 
   <!-- White Copilot logo centered on screen -->
   <g transform="translate({logo_x:.1f},{logo_y:.1f}) scale({logo_scale:.3f})" fill="white" opacity="0.92">

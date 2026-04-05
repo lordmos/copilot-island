@@ -184,9 +184,13 @@ private struct AssistantMessageBubble: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            CopilotIconView(color: CopilotTheme.sagePrimary, size: 15)
-                .frame(width: 18)
-                .padding(.top, 3)
+            // App icon as agent avatar
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 22, height: 22)
+                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                .padding(.top, 1)
 
             VStack(alignment: .leading, spacing: 0) {
                 if message.content.isEmpty {
