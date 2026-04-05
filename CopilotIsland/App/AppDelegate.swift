@@ -6,6 +6,7 @@
 import AppKit
 import Combine
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowManager: WindowManager?
     private var sessionMonitor: CopilotSessionMonitor?

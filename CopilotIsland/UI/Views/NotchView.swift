@@ -62,10 +62,6 @@ struct NotchView: View {
             width: viewModel.deviceNotchRect.width + 20,
             height: viewModel.deviceNotchRect.height + 8
         )
-        .position(
-            x: viewModel.screenRect.midX,
-            y: viewModel.windowHeight - viewModel.deviceNotchRect.height / 2 - 4
-        )
     }
 
     // MARK: - Expanded State
@@ -92,11 +88,7 @@ struct NotchView: View {
             .shadow(color: .black.opacity(0.6), radius: 20, y: 8)
             .frame(width: viewModel.openedSize.width, height: viewModel.openedSize.height)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .position(
-            x: viewModel.screenRect.midX,
-            y: viewModel.windowHeight - viewModel.openedSize.height / 2 - 4
-        )
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 
     private var header: some View {
