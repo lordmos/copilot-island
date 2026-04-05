@@ -59,19 +59,14 @@ cp -R "$APP_SRC" "$STAGING/"
 # Symlink to /Applications for drag-install UX
 ln -s /Applications "$STAGING/Applications"
 
-TMP_DMG="${DIST}/tmp_${DMG_NAME}"
-FINAL_DMG="${DIST}/${DMG_NAME}"
-
 echo "💿 Creating DMG…"
+# Single-step compressed DMG (avoids hdiutil convert resource-lock issue)
 hdiutil create \
     -volname "$VOLUME_NAME" \
     -srcfolder "$STAGING" \
     -ov \
-    -format UDRW \
-    "$TMP_DMG"
-
-hdiutil convert "$TMP_DMG" -format UDZO -o "$FINAL_DMG"
-rm -f "$TMP_DMG"
+    -format UDZO \
+    "$FINAL_DMG"
 rm -rf "$STAGING"
 
 echo "✅ DMG ready: ${FINAL_DMG}"

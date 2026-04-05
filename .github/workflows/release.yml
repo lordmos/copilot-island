@@ -50,14 +50,12 @@ jobs:
           cp -R "$APP" /tmp/dmg_staging/
           ln -s /Applications /tmp/dmg_staging/Applications
 
+          # Single-step UDZO (compressed) DMG — avoids hdiutil convert resource lock
           hdiutil create \
             -volname "Copilot Island ${VERSION}" \
             -srcfolder /tmp/dmg_staging \
-            -ov -format UDRW \
-            /tmp/tmp.dmg
-
-          hdiutil convert /tmp/tmp.dmg -format UDZO \
-            -o "$RUNNER_TEMP/CopilotIsland-${VERSION}.dmg"
+            -ov -format UDZO \
+            "$RUNNER_TEMP/CopilotIsland-${VERSION}.dmg"
 
           echo "DMG_PATH=$RUNNER_TEMP/CopilotIsland-${VERSION}.dmg" >> "$GITHUB_ENV"
           echo "DMG_NAME=CopilotIsland-${VERSION}.dmg" >> "$GITHUB_ENV"
