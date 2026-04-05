@@ -6,12 +6,12 @@
 
 <p align="center">
   <strong>Bring GitHub Copilot CLI to your MacBook Notch</strong><br/>
-  Monitor sessions, browse chat history, and chat with AI — all from the notch.
+  Monitor sessions and browse chat history — all from the notch.
 </p>
 
 <p align="center">
   <a href="https://github.com/lordmos/copilot-island/releases/latest">
-    <img src="https://img.shields.io/github/v/release/lordmos/copilot-island?style=flat-square&color=6E40C9" alt="Latest Release"/>
+    <img src="https://img.shields.io/github/v/release/lordmos/copilot-island?style=flat-square&color=6CBB98" alt="Latest Release"/>
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="Apache 2.0"/>
@@ -19,15 +19,26 @@
   <img src="https://img.shields.io/badge/macOS-14%2B-brightgreen?style=flat-square" alt="macOS 14+"/>
   <img src="https://img.shields.io/badge/Swift-5.9-orange?style=flat-square&logo=swift" alt="Swift 5.9"/>
   <a href="https://lordmos.github.io/copilot-island">
-    <img src="https://img.shields.io/badge/docs-website-purple?style=flat-square" alt="Documentation"/>
+    <img src="https://img.shields.io/badge/docs-website-brightgreen?style=flat-square" alt="Documentation"/>
   </a>
+</p>
+
+<p align="center">
+  <a href="README.zh-Hans.md">简体中文</a> ·
+  <a href="README.zh-Hant.md">繁體中文</a> ·
+  <a href="README.ja.md">日本語</a> ·
+  <a href="README.ko.md">한국어</a> ·
+  <a href="README.fr.md">Français</a> ·
+  <a href="README.de.md">Deutsch</a> ·
+  <a href="README.pt.md">Português</a> ·
+  <a href="README.es.md">Español</a>
 </p>
 
 ---
 
 ## What is Copilot Island?
 
-Copilot Island is a **free, open-source macOS menu bar app** that lives in your MacBook's notch and shows you everything GitHub Copilot CLI is doing — in real time.
+Copilot Island is a **free, open-source macOS notch app** that lives in your MacBook's notch and shows you everything GitHub Copilot CLI is doing — in real time.
 
 Inspired by [ClaudeIsland](https://github.com/celestialglobe/claude-island), Copilot Island brings the same elegant notch-based UI to GitHub Copilot CLI users.
 
@@ -38,9 +49,8 @@ Inspired by [ClaudeIsland](https://github.com/celestialglobe/claude-island), Cop
 | 🔔 **Live Sessions** | Auto-detects all active Copilot CLI sessions |
 | ⚡ **Tool Feed** | See every tool call (read_file, run_command, etc.) as it happens |
 | 💬 **Chat History** | Browse full conversation with Markdown rendering |
-| 🤖 **GitHub Models Chat** | Chat with GPT-4o, Claude, and more — no CLI needed |
-| 🎨 **Copilot Design** | GitHub's purple gradient design system, dark-only |
-| 🔒 **Private & Secure** | No analytics, no telemetry, Keychain token storage |
+| 🎨 **Sage Green Design** | Muted sage-green palette, dark theme, fluid animations |
+| 🔒 **Private & Secure** | No analytics, no telemetry, runs 100% on-device |
 
 ## Requirements
 
@@ -88,15 +98,14 @@ CopilotIsland/
 ├── Services/
 │   ├── Session/            # CopilotSessionWatcher (FSEvents) + Monitor
 │   ├── State/              # SessionStore (Swift Actor)
-│   ├── API/                # GitHubModelsClient (SSE streaming)
 │   └── Update/             # SparkleUpdater
 ├── Core/                   # NotchViewModel + NotchGeometry + Settings
 ├── Events/                 # Mouse event monitors
 └── UI/
     ├── Window/             # NotchWindow (NSPanel)
-    ├── Components/         # NotchShape + CopilotTheme
+    ├── Components/         # NotchShape + CopilotTheme (sage green)
     └── Views/              # NotchView, SessionsListView, ChatHistoryView,
-                            #   APIChatView, MenuView
+                            #   MenuView
 ```
 
 ## Contributing

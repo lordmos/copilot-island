@@ -89,19 +89,15 @@ actor SessionStore {
 
         case .toolCompleted(let sessionId, let toolCallId, let success, let result):
             update(sessionId) { state in
-                state.phase = .processing
+                let toolName = state.currentTool?.toolName  // capture before nil
                 state.currentTool = nil
+                state.phase = .processing
                 state.lastActivity = Date()
-                if let tool = state.currentTool ?? state.messages
-                    .last(where: { $0.role == .tool && $0.id == toolCallId })
-                    .map({ _ in state.currentTool }) ?? state.currentTool {
-                    _ = tool
-                }
                 state.messages.append(CopilotMessage(
                     id: toolCallId,
                     role: .tool,
                     content: result,
-                    toolName: state.currentTool?.toolName,
+                    toolName: toolName,
                     toolSuccess: success,
                     timestamp: Date()
                 ))
