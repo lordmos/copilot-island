@@ -8,22 +8,22 @@ path2 = "M6.25 9.037a.75.75 0 0 1 .75.75v1.501a.75.75 0 0 1-1.5 0V9.787a.75.75 0
 
 # Design: Dark squircle background + sage green screen with notch cutout + dark Copilot logo
 r = 230          # squircle background corner radius
-sw, sh = 808, 600  # screen width, height (enlarged for prominence)
-sx, sy = 108, 175  # screen top-left
+sw, sh = 808, 600  # screen width, height
+sx, sy = 108, 200  # screen top-left (moved down to give notch more room)
 srx = 24         # screen corner radius
-nw, nh = 200, 44 # notch pill width, height
-nrx = nh // 2    # = 22 (full pill)
-nx = 512 - nw // 2   # = 412 (notch left)
-ny = sy - nh // 2    # = 153 (notch top, centered on screen top edge)
-cam_cy = ny + nh // 2  # = 175 (notch center = screen top edge)
+nw, nh = 380, 80 # notch pill — much larger to convey "notch app" concept
+nrx = nh // 2    # = 40 (full pill)
+nx = 512 - nw // 2   # = 322 (notch left)
+ny = sy - nh // 2    # = 160 (notch top, centered on screen top edge)
+cam_cy = ny + nh // 2  # = 200 (notch center = screen top edge)
 # Logo centered on usable screen area (below notch bottom)
-notch_bottom = ny + nh    # = 197
-screen_bottom = sy + sh   # = 775
-logo_center_y = (notch_bottom + screen_bottom) / 2  # = 486
-logo_size = 400
-logo_scale = logo_size / 16   # = 25
-logo_x = 512 - logo_size / 2  # = 312
-logo_y = logo_center_y - logo_size / 2  # = 286
+notch_bottom = ny + nh    # = 240
+screen_bottom = sy + sh   # = 800
+logo_center_y = (notch_bottom + screen_bottom) / 2  # = 520
+logo_size = 380
+logo_scale = logo_size / 16   # = 23.75
+logo_x = 512 - logo_size / 2  # = 322
+logo_y = logo_center_y - logo_size / 2  # = 330
 
 svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
