@@ -22,8 +22,21 @@ class CopilotSessionMonitor: ObservableObject {
             .sink { [weak self] sessions in
                 self?.sessions = sessions
                 self?.activeSessions = sessions.filter { $0.phase.isActive }
+                self?.triggerSoundIfNeeded(sessions)
             }
             .store(in: &cancellables)
+    }
+
+    // Plays the 8-bit chime when any session transitions to .waitingForInput.
+    private var previousPhases: [String: SessionPhase] = [:]
+    private func triggerSoundIfNeeded(_ sessions: [SessionState]) {
+        for session in sessions {
+            let prev = previousPhases[session.sessionId]
+            if case .waitingForInput = session.phase, prev != nil, prev != .waitingForInput {
+                SoundManager.shared.playAgentDone()
+            }
+            previousPhases[session.sessionId] = session.phase
+        }
     }
 
     func startMonitoring() {

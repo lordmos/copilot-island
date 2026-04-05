@@ -33,10 +33,12 @@ class WindowManager {
     private var notchWindow: NotchWindow?
     private var viewModel: NotchViewModel?
     private let sessionMonitor: CopilotSessionMonitor
+    private let sparkleUpdater: SparkleUpdater
     private var cancellables = Set<AnyCancellable>()
 
-    init(sessionMonitor: CopilotSessionMonitor) {
+    init(sessionMonitor: CopilotSessionMonitor, sparkleUpdater: SparkleUpdater) {
         self.sessionMonitor = sessionMonitor
+        self.sparkleUpdater = sparkleUpdater
     }
 
     func createNotchWindow() {
@@ -72,6 +74,7 @@ class WindowManager {
 
         // Build SwiftUI view inside a hit-test–aware hosting view.
         let rootView = NotchView(viewModel: vm, sessionMonitor: sessionMonitor)
+            .environmentObject(sparkleUpdater)
         let hostingView = PassThroughHostingView(rootView: rootView)
         hostingView.hitTestRect = { [weak vm] in
             guard let vm else { return .zero }

@@ -14,12 +14,14 @@ enum NotchContentType: Equatable {
     case sessions
     case menu
     case chat(SessionState)
+    case agentChat
 
     var id: String {
         switch self {
         case .sessions: return "sessions"
         case .menu: return "menu"
         case .chat(let s): return "chat-\(s.sessionId)"
+        case .agentChat: return "agentChat"
         }
     }
 }
@@ -41,10 +43,10 @@ class NotchViewModel: ObservableObject {
 
     var openedSize: CGSize {
         switch contentType {
-        case .chat:
+        case .chat, .agentChat:
             return CGSize(width: min(screenRect.width * 0.5, 620), height: 580)
         case .menu:
-            return CGSize(width: min(screenRect.width * 0.4, 480), height: 360)
+            return CGSize(width: min(screenRect.width * 0.4, 480), height: 420)
         case .sessions:
             return CGSize(width: min(screenRect.width * 0.4, 480), height: 320)
         }
@@ -135,6 +137,10 @@ class NotchViewModel: ObservableObject {
         if case .chat(let s) = contentType { savedChatSession = s }
         status = .closed
         contentType = .sessions
+    }
+
+    func showAgentChat() {
+        contentType = .agentChat
     }
 
     func notchPop() {

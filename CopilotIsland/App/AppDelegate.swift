@@ -10,12 +10,13 @@ import Combine
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var windowManager: WindowManager?
     private var sessionMonitor: CopilotSessionMonitor?
+    let sparkleUpdater = SparkleUpdater()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
         sessionMonitor = CopilotSessionMonitor()
-        windowManager = WindowManager(sessionMonitor: sessionMonitor!)
+        windowManager = WindowManager(sessionMonitor: sessionMonitor!, sparkleUpdater: sparkleUpdater)
         windowManager?.createNotchWindow()
 
         sessionMonitor?.startMonitoring()

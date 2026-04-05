@@ -11,6 +11,7 @@ import SwiftUI
 struct NotchView: View {
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject var sessionMonitor: CopilotSessionMonitor
+    @StateObject private var copilotClient = GitHubCopilotClient()
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -119,6 +120,19 @@ struct NotchView: View {
                     .clipShape(Capsule())
             }
 
+            // Chat button
+            Button(action: { viewModel.showAgentChat() }) {
+                Image(systemName: "bubble.left.and.bubble.right")
+                    .font(.system(size: 12))
+                    .foregroundColor(viewModel.contentType == .agentChat
+                        ? CopilotTheme.sagePrimary
+                        : CopilotTheme.textSecondary)
+                    .frame(width: 24, height: 24)
+                    .background(CopilotTheme.cardBackground)
+                    .clipShape(Circle())
+            }
+            .buttonStyle(.plain)
+
             // Menu toggle
             Button(action: { viewModel.toggleMenu() }) {
                 Image(systemName: viewModel.contentType == .menu ? "xmark" : "ellipsis")
@@ -145,6 +159,11 @@ struct NotchView: View {
         case .chat(let session):
             ChatHistoryView(
                 session: session,
+                onBack: { viewModel.exitChat() }
+            )
+        case .agentChat:
+            AgentChatView(
+                client: copilotClient,
                 onBack: { viewModel.exitChat() }
             )
         case .menu:

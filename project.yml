@@ -45,6 +45,7 @@ targets:
       - CopilotIsland/Assets.xcassets
       - CopilotIsland/Resources/Info.plist
       - CopilotIsland/Resources/CopilotIsland.entitlements
+      - CopilotIsland/Resources/agent_done.wav
     dependencies:
       - package: Sparkle
         product: Sparkle
