@@ -19,25 +19,34 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
-      - name: Build
+      - name: Build (Debug, no signing)
         run: |
           xcodebuild \
             -scheme CopilotIsland \
-            -configuration Release \
+            -configuration Debug \
             -destination 'platform=macOS' \
-            build | xcpretty
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            build
 
+      # Archive & export require APPLE_CERTIFICATE + APPLE_CERTIFICATE_PASSWORD secrets.
+      # Set them in repo Settings → Secrets to enable release builds.
       - name: Archive for Release
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && env.HAS_CERT == 'true'
+        env:
+          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
         run: |
           xcodebuild \
             -scheme CopilotIsland \
             -configuration Release \
             -archivePath ./CopilotIsland.xcarchive \
-            archive | xcpretty
+            archive
 
       - name: Export .app
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && env.HAS_CERT == 'true'
+        env:
+          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
         run: |
           xcodebuild \
             -exportArchive \
@@ -46,7 +55,9 @@ jobs:
             -exportOptionsPlist scripts/ExportOptions.plist
 
       - name: Upload artifact
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && env.HAS_CERT == 'true'
+        env:
+          HAS_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
         uses: actions/upload-artifact@v4
         with:
           name: CopilotIsland-${{ github.sha }}
