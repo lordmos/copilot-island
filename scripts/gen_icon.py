@@ -12,19 +12,19 @@ sw, sh = 808, 600  # screen width, height
 sx, sy = 108, 210  # screen top-left
 srx = 28          # screen corner radius
 
-nw, nh = 430, 145  # notch pill — large & prominent (was 380×110)
+nw, nh = 430, 145  # notch pill
 nrx = nh // 2      # = 72 (full pill)
-nx = 512 - nw // 2   # = 297 (notch left)
-ny = sy - nh // 2    # = 138 (notch top, centered on screen top edge)
-cam_cy = ny + nh // 2  # = 210 (notch center = screen top edge)
+nx = 512 - nw // 2   # = 297 (horizontally centered)
+ny = sy             # notch top aligns with screen top edge, cuts downward
+cam_cy = ny + nh // 2  # = 282 (centre of notch)
 
-notch_bottom = ny + nh    # = 283
+notch_bottom = ny + nh    # = 355
 screen_bottom = sy + sh   # = 810
-logo_center_y = (notch_bottom + screen_bottom) / 2  # ≈ 546
+logo_center_y = (notch_bottom + screen_bottom) / 2  # ≈ 582
 logo_size = 370
 logo_scale = logo_size / 16   # ≈ 23.125
 logo_x = 512 - logo_size / 2  # = 327
-logo_y = logo_center_y - logo_size / 2  # ≈ 361
+logo_y = logo_center_y - logo_size / 2  # ≈ 397
 
 # ── Colours ───────────────────────────────────────────────────────────────────
 # Background: subtle diagonal gradient from deep forest-teal to near-black
@@ -59,8 +59,8 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" vie
   <rect x="{sx}" y="{sy}" width="{sw}" height="{sh}" rx="{srx}" fill="none"
         stroke="rgba(255,255,255,0.14)" stroke-width="2"/>
 
-  <!-- Notch pill — reuses same userSpaceOnUse gradient as background, blends perfectly -->
-  <rect x="{nx}" y="{ny}" width="{nw}" height="{nh}" rx="{nrx}" fill="url(#bggrad)"/>
+  <!-- Notch pill — pure black, top-aligned with screen, cuts downward -->
+  <rect x="{nx}" y="{ny}" width="{nw}" height="{nh}" rx="{nrx}" fill="#000000"/>
 
   <!-- Camera LED dot inside notch -->
   <circle cx="512" cy="{cam_cy}" r="7" fill="{SCREEN_TOP}" opacity="0.6"/>
