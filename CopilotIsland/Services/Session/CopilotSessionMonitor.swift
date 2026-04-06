@@ -31,14 +31,23 @@ class CopilotSessionMonitor: ObservableObject {
             .store(in: &cancellables)
     }
 
-    // Plays the 8-bit chime and fires sessionCompleted when any session finishes a turn.
+    // Plays the 8-bit chime and fires sessionCompleted only after FULL work is done.
+    // "Full work" = the agent was actively processing or running tools before completing.
+    // Idle/compacting → waitingForInput does NOT trigger (not a meaningful work completion).
     private var previousPhases: [String: SessionPhase] = [:]
     private func triggerSoundIfNeeded(_ sessions: [SessionState]) {
         for session in sessions {
             let prev = previousPhases[session.sessionId]
-            if case .waitingForInput = session.phase, prev != nil, prev != .waitingForInput {
-                SoundManager.shared.playAgentDone()
-                sessionCompleted.send()
+            if case .waitingForInput = session.phase {
+                let wasWorking: Bool
+                switch prev {
+                case .processing, .runningTool: wasWorking = true
+                default: wasWorking = false
+                }
+                if wasWorking {
+                    SoundManager.shared.playAgentDone()
+                    sessionCompleted.send()
+                }
             }
             previousPhases[session.sessionId] = session.phase
         }

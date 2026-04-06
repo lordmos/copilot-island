@@ -163,13 +163,21 @@ struct NotchView: View {
                 sessions: sessionMonitor.sessions,
                 onSelectSession: { viewModel.showChat(for: $0) }
             )
-        case .chat(let session):
-            ChatHistoryView(
-                session: session,
-                onBack: { viewModel.exitChat() }
-            )
+        case .chat(let sessionId):
+            // Look up the LIVE session by ID so ChatHistoryView always has fresh data
+            if let liveSession = sessionMonitor.sessions.first(where: { $0.sessionId == sessionId }) {
+                ChatHistoryView(
+                    session: liveSession,
+                    onBack: { viewModel.exitChat() }
+                )
+            } else {
+                // Session was removed — fall back to list
+                SessionsListView(
+                    sessions: sessionMonitor.sessions,
+                    onSelectSession: { viewModel.showChat(for: $0) }
+                )
+            }
         case .agentChat:
-            // Standalone chat de-emphasized — show sessions as fallback
             SessionsListView(
                 sessions: sessionMonitor.sessions,
                 onSelectSession: { viewModel.showChat(for: $0) }

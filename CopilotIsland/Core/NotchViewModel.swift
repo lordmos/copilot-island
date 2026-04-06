@@ -13,14 +13,14 @@ enum NotchOpenReason { case click, hover, notification, boot, unknown }
 enum NotchContentType: Equatable {
     case sessions
     case menu
-    case chat(SessionState)
+    case chat(String)    // sessionId — look up live session in NotchView
     case agentChat
 
     var id: String {
         switch self {
         case .sessions: return "sessions"
         case .menu: return "menu"
-        case .chat(let s): return "chat-\(s.sessionId)"
+        case .chat(let id): return "chat-\(id)"
         case .agentChat: return "agentChat"
         }
     }
@@ -58,7 +58,7 @@ class NotchViewModel: ObservableObject {
     private let events = EventMonitors.shared
     private var hoverTimer: DispatchWorkItem?
     private var popRevertTimer: DispatchWorkItem?
-    private var savedChatSession: SessionState?
+    private var savedChatSessionId: String?
 
     init(deviceNotchRect: CGRect, screenRect: CGRect, windowHeight: CGFloat, hasPhysicalNotch: Bool) {
         self.geometry = NotchGeometry(
@@ -127,15 +127,15 @@ class NotchViewModel: ObservableObject {
     func notchOpen(reason: NotchOpenReason = .unknown) {
         openReason = reason
         status = .opened
-        if reason == .notification { savedChatSession = nil; return }
-        if let saved = savedChatSession {
-            if case .chat(let c) = contentType, c.sessionId == saved.sessionId { return }
-            contentType = .chat(saved)
+        if reason == .notification { savedChatSessionId = nil; return }
+        if let id = savedChatSessionId {
+            if case .chat(let current) = contentType, current == id { return }
+            contentType = .chat(id)
         }
     }
 
     func notchClose() {
-        if case .chat(let s) = contentType { savedChatSession = s }
+        if case .chat(let id) = contentType { savedChatSessionId = id }
         status = .closed
         contentType = .sessions
     }
@@ -174,8 +174,8 @@ class NotchViewModel: ObservableObject {
     }
 
     func showChat(for session: SessionState) {
-        if case .chat(let c) = contentType, c.sessionId == session.sessionId { return }
-        contentType = .chat(session)
+        if case .chat(let id) = contentType, id == session.sessionId { return }
+        contentType = .chat(session.sessionId)
     }
 
     func showAPIChat() {
@@ -183,7 +183,7 @@ class NotchViewModel: ObservableObject {
     }
 
     func exitChat() {
-        savedChatSession = nil
+        savedChatSessionId = nil
         contentType = .sessions
     }
 

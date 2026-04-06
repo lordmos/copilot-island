@@ -49,7 +49,7 @@ enum CopilotTheme {
         switch phase {
         case .processing: return sageGlow
         case .runningTool: return sagePrimary
-        case .waitingForInput: return githubBlue
+        case .waitingForInput: return successGreen   // completed turn
         case .ended: return textTertiary
         case .error: return warningRed
         case .interrupted: return warningRed
@@ -91,5 +91,32 @@ struct CopilotCardStyle: ViewModifier {
 extension View {
     func copilotCard() -> some View {
         modifier(CopilotCardStyle())
+    }
+}
+
+// MARK: - SageSpinner
+// Replaces system ProgressView() which doesn't reliably follow tint on macOS dark backgrounds.
+
+struct SageSpinner: View {
+    @State private var rotation: Double = 0
+    var size: CGFloat = 11
+
+    var body: some View {
+        Circle()
+            .trim(from: 0, to: 0.72)
+            .stroke(
+                AngularGradient(
+                    colors: [CopilotTheme.sagePrimary, CopilotTheme.sagePrimary.opacity(0.05)],
+                    center: .center
+                ),
+                style: StrokeStyle(lineWidth: max(size * 0.14, 1.5), lineCap: .round)
+            )
+            .frame(width: size, height: size)
+            .rotationEffect(.degrees(rotation))
+            .onAppear {
+                withAnimation(.linear(duration: 1.0).repeatForever(autoreverses: false)) {
+                    rotation = 360
+                }
+            }
     }
 }

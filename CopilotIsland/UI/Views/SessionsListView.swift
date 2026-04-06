@@ -221,18 +221,16 @@ private struct SessionRow: View {
     private var phaseIndicator: some View {
         switch session.phase {
         case .processing:
-            ProgressView()
-                .scaleEffect(0.5)
+            SageSpinner(size: 12)
                 .frame(width: 14, height: 14)
-                .tint(CopilotTheme.sagePrimary)
         case .runningTool:
             Image(systemName: "bolt.fill")
                 .font(.system(size: 10))
                 .foregroundColor(CopilotTheme.sagePrimary)
         case .waitingForInput:
-            Image(systemName: "pause.circle.fill")
+            Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 12))
-                .foregroundColor(CopilotTheme.githubBlue.opacity(0.8))
+                .foregroundColor(CopilotTheme.successGreen)
         case .error:
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 12))

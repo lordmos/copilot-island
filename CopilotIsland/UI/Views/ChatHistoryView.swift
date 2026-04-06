@@ -120,7 +120,7 @@ struct ChatHistoryView: View {
     private var activeToolBar: some View {
         if case .runningTool(let name, let args) = session.phase {
             HStack(spacing: 8) {
-                ProgressView().scaleEffect(0.6).tint(CopilotTheme.sagePrimary)
+                SageSpinner(size: 12)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(NSLocalizedString("Running: %@", comment: "").replacingOccurrences(of: "%@", with: name))
                         .font(.system(size: 11, weight: .medium))
@@ -238,11 +238,11 @@ private struct UserMessageBubble: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 11)
                 .padding(.vertical, 8)
-                .background(CopilotTheme.githubBlue.opacity(0.75))
+                .background(CopilotTheme.sageDeep.opacity(0.85))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             Image(systemName: "person.circle.fill")
                 .font(.system(size: 18))
-                .foregroundColor(CopilotTheme.githubBlue)
+                .foregroundColor(CopilotTheme.sagePrimary)
         }
     }
 }
