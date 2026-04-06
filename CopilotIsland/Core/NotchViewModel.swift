@@ -57,6 +57,7 @@ class NotchViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let events = EventMonitors.shared
     private var hoverTimer: DispatchWorkItem?
+    private var popRevertTimer: DispatchWorkItem?
     private var savedChatSession: SessionState?
 
     init(deviceNotchRect: CGRect, screenRect: CGRect, windowHeight: CGFloat, hasPhysicalNotch: Bool) {
@@ -151,6 +152,21 @@ class NotchViewModel: ObservableObject {
     func notchUnpop() {
         guard status == .popping else { return }
         status = .closed
+    }
+
+    /// Called when a session completes a turn. Briefly pops the notch to
+    /// signal the user, then auto-reverts after 2 seconds.
+    func triggerCompletionPop() {
+        // Only pop when panel is closed; if already open, user can see the change.
+        guard status == .closed else { return }
+        popRevertTimer?.cancel()
+        status = .popping
+        let item = DispatchWorkItem { [weak self] in
+            guard let self, self.status == .popping else { return }
+            withAnimation(self.animation) { self.status = .closed }
+        }
+        popRevertTimer = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: item)
     }
 
     func toggleMenu() {

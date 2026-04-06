@@ -32,46 +32,49 @@ struct NotchView: View {
     // MARK: - Closed State (with peek)
 
     private var closedPill: some View {
-        let notchW = viewModel.deviceNotchRect.width + 20
-        let notchH = viewModel.deviceNotchRect.height + 8
+        let notchW = viewModel.deviceNotchRect.width
+        let notchH = viewModel.deviceNotchRect.height   // exact notch height, no padding
         let peekW: CGFloat = 50   // peek width on each side
+        let isPopping = viewModel.status == .popping
 
         return HStack(spacing: 0) {
-            // Left peek — status icon
+            // Left peek — status icon (transparent, no interaction)
             HStack {
                 Spacer()
                 LeftPeekView(sessions: sessionMonitor.activeSessions)
-                    .frame(width: 20, height: notchH)
+                    .frame(width: 24, height: notchH)
+                    .scaleEffect(isPopping ? 1.15 : 1.0)
+                    .animation(viewModel.animation, value: isPopping)
             }
             .frame(width: peekW, height: notchH)
 
-            // Center notch pill (black background)
+            // Center notch pill — flush with screen top, rounded only at bottom
             HStack(spacing: 6) {
                 Circle()
                     .fill(CopilotTheme.copilotGradient)
-                    .frame(width: 8, height: 8)
+                    .frame(width: 7, height: 7)
                     .shadow(color: CopilotTheme.sagePrimary.opacity(0.8), radius: 4)
 
                 if sessionMonitor.activeSessions.isEmpty {
                     Circle()
                         .fill(CopilotTheme.textTertiary)
-                        .frame(width: 5, height: 5)
+                        .frame(width: 4, height: 4)
                 } else {
                     PulsingDot()
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
             .frame(width: notchW, height: notchH)
             .background(
+                // topRadius=0: flat top edge flush with screen; only bottom is rounded
                 NotchShape(
-                    topRadius: viewModel.status == .popping ? 9 : 6,
-                    bottomRadius: viewModel.status == .popping ? 18 : 14
+                    topRadius: 0,
+                    bottomRadius: isPopping ? 18 : 14
                 )
                 .fill(Color.black)
+                .animation(viewModel.animation, value: isPopping)
             )
 
-            // Right peek — session count
+            // Right peek — session count (transparent, no interaction)
             HStack {
                 RightPeekView(count: sessionMonitor.sessions.count)
                     .frame(height: notchH)
@@ -79,7 +82,7 @@ struct NotchView: View {
             }
             .frame(width: peekW, height: notchH)
         }
-        .frame(width: notchW + peekW * 2, height: notchH)
+        .frame(width: notchW + peekW * 2, height: notchH, alignment: .top)
     }
 
     // MARK: - Expanded State

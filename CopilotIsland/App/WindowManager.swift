@@ -45,15 +45,16 @@ class WindowManager {
         guard let screen = NSScreen.main else { return }
         let screenFrame = screen.frame
 
-        // Always create a window — fall back to simulated notch on non-notch Macs.
-        let notchWidth: CGFloat = screenFrame.width > 2000 ? 196 : 126
-        let notchHeight: CGFloat = 37
-        let deviceNotchRect = CGRect(
-            x: (screenFrame.width - notchWidth) / 2,
-            y: 0,
-            width: notchWidth,
-            height: notchHeight
-        )
+        // Use dynamic notch dimensions from screen APIs (macOS 12+).
+        // Falls back to simulated notch rect on non-notch Macs.
+        let deviceNotchRect: CGRect
+        if let nr = screen.notchRect {
+            deviceNotchRect = nr
+        } else {
+            deviceNotchRect = CGRect(x: 0, y: 0, width: 174, height: 37)
+        }
+        let notchWidth  = deviceNotchRect.width
+        let notchHeight = deviceNotchRect.height
 
         // Window covers the top 750pt of the screen — enough for the largest content view.
         let windowHeight: CGFloat = 750
@@ -90,10 +91,11 @@ class WindowManager {
                     height: panelSize.height
                 )
             case .closed, .popping:
+                // Only the center notch area is interactive; peek regions are display-only
                 return CGRect(
-                    x: (screenFrame.width - notchWidth) / 2 - 10,
-                    y: windowHeight - notchHeight - 5,
-                    width: notchWidth + 20,
+                    x: (screenFrame.width - notchWidth) / 2 - 8,
+                    y: windowHeight - notchHeight,
+                    width: notchWidth + 16,
                     height: notchHeight + 10
                 )
             }
@@ -101,8 +103,6 @@ class WindowManager {
 
         let window = NotchWindow(contentRect: windowFrame)
         window.contentView = hostingView
-        // Re-apply frame after level is set to ensure window sits at exact screen top.
-        // Without this, the system may constrain position before .mainMenu+3 level takes effect.
         window.setFrame(windowFrame, display: false)
         window.makeKeyAndOrderFront(nil)
         notchWindow = window
@@ -122,6 +122,12 @@ class WindowManager {
                     window?.ignoresMouseEvents = true
                 }
             }
+            .store(in: &cancellables)
+
+        // Trigger notch pop + sound already handled; pop animation on session complete.
+        sessionMonitor.sessionCompleted
+            .receive(on: DispatchQueue.main)
+            .sink { [weak vm] in vm?.triggerCompletionPop() }
             .store(in: &cancellables)
 
         // Brief delay before boot animation so window is fully on screen.

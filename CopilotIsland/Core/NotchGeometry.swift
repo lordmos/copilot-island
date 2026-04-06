@@ -54,11 +54,27 @@ extension NSScreen {
         return safeAreaInsets.top > 0
     }
 
+    /// Dynamic notch rect in logical points, derived from actual screen APIs.
+    /// Uses auxiliaryTopLeftArea/Right to compute exact notch width on macOS 12+.
+    /// Falls back to known approximate values on older OS / non-notch displays.
     var notchRect: CGRect? {
         guard hasNotch else { return nil }
-        // MacBook Pro notch: ~126x37 at 14", ~196x37 at 16" (points)
-        let notchWidth: CGFloat = frame.width > 2000 ? 196 : 126
-        let notchHeight: CGFloat = 37
+        guard #available(macOS 12.0, *) else { return nil }
+
+        let notchHeight = safeAreaInsets.top           // exact notch height in points
+        let fullWidth   = frame.width
+        let leftW       = auxiliaryTopLeftArea?.width  ?? 0
+        let rightW      = auxiliaryTopRightArea?.width ?? 0
+
+        let notchWidth: CGFloat
+        if leftW > 0, rightW > 0 {
+            // +4 overlaps the edge curvature so the pill blends with the bezel
+            notchWidth = fullWidth - leftW - rightW + 4
+        } else {
+            // Fallback: 345 native px / 2x Retina = 172.5 pts (same on 14" and 16" MBP)
+            notchWidth = 174
+        }
         return CGRect(x: 0, y: 0, width: notchWidth, height: notchHeight)
     }
 }
+

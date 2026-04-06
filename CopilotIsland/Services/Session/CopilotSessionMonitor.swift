@@ -14,6 +14,10 @@ class CopilotSessionMonitor: ObservableObject {
     @Published var sessions: [SessionState] = []
     @Published var activeSessions: [SessionState] = []
 
+    /// Fires once each time any session transitions to `.waitingForInput`.
+    /// WindowManager subscribes to trigger the notch pop animation.
+    let sessionCompleted = PassthroughSubject<Void, Never>()
+
     private var cancellables = Set<AnyCancellable>()
 
     init() {
@@ -27,13 +31,14 @@ class CopilotSessionMonitor: ObservableObject {
             .store(in: &cancellables)
     }
 
-    // Plays the 8-bit chime when any session transitions to .waitingForInput.
+    // Plays the 8-bit chime and fires sessionCompleted when any session finishes a turn.
     private var previousPhases: [String: SessionPhase] = [:]
     private func triggerSoundIfNeeded(_ sessions: [SessionState]) {
         for session in sessions {
             let prev = previousPhases[session.sessionId]
             if case .waitingForInput = session.phase, prev != nil, prev != .waitingForInput {
                 SoundManager.shared.playAgentDone()
+                sessionCompleted.send()
             }
             previousPhases[session.sessionId] = session.phase
         }

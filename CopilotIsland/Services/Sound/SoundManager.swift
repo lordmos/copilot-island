@@ -22,7 +22,15 @@ final class SoundManager {
     }
 
     func playAgentDone() {
-        guard UserDefaults.standard.bool(forKey: "soundEnabled") else { return }
+        // @AppStorage defaults to true but only writes UserDefaults when the user changes the toggle.
+        // UserDefaults.bool(forKey:) returns false if the key was never written, so we check explicitly.
+        let soundEnabled: Bool
+        if UserDefaults.standard.object(forKey: "soundEnabled") != nil {
+            soundEnabled = UserDefaults.standard.bool(forKey: "soundEnabled")
+        } else {
+            soundEnabled = true  // default: on
+        }
+        guard soundEnabled else { return }
         player?.currentTime = 0
         player?.play()
     }
