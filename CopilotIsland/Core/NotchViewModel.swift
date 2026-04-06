@@ -35,6 +35,7 @@ class NotchViewModel: ObservableObject {
 
     let geometry: NotchGeometry
     let spacing: CGFloat = 12
+    let peekWidth: CGFloat = 50   // width of the peek icon area on each side of the notch
     let hasPhysicalNotch: Bool
 
     var deviceNotchRect: CGRect { geometry.deviceNotchRect }

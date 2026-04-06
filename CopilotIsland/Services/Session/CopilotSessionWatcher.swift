@@ -141,6 +141,7 @@ final class SessionFileWatcher: @unchecked Sendable {
     private var source: DispatchSourceFileSystemObject?
     private var fd: Int32 = -1
     private var offset: UInt64 = 0
+    private var refreshTimer: Timer?      // 1-second fallback polling
 
     init(sessionId: String, dir: URL) {
         self.sessionId = sessionId
@@ -180,11 +181,22 @@ final class SessionFileWatcher: @unchecked Sendable {
 
         source = src
         src.resume()
+
+        // 1-second fallback timer: catches events DispatchSource may have missed
+        // (can happen under heavy I/O load or rapid file appends)
+        let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            self.readNewEvents(url: capturedURL, sessionId: capturedId)
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        refreshTimer = timer
     }
 
     func stop() {
         source?.cancel()
         source = nil
+        refreshTimer?.invalidate()
+        refreshTimer = nil
     }
 
     private func readNewEvents(url: URL, sessionId: String) {

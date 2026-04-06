@@ -32,24 +32,47 @@ class CopilotSessionMonitor: ObservableObject {
     }
 
     // Plays the 8-bit chime and fires sessionCompleted only after FULL work is done.
-    // "Full work" = the agent was actively processing or running tools before completing.
-    // Idle/compacting → waitingForInput does NOT trigger (not a meaningful work completion).
+    // Uses a 3-second debounce: if the agent immediately continues (e.g. multi-step confirmation),
+    // the timer is cancelled and no sound plays. Sound only fires if agent stays idle ≥ 3 seconds.
     private var previousPhases: [String: SessionPhase] = [:]
+    private var soundTimers: [String: DispatchWorkItem] = [:]
+
     private func triggerSoundIfNeeded(_ sessions: [SessionState]) {
         for session in sessions {
             let prev = previousPhases[session.sessionId]
-            if case .waitingForInput = session.phase {
+            let id   = session.sessionId
+
+            switch session.phase {
+            case .waitingForInput:
                 let wasWorking: Bool
                 switch prev {
                 case .processing, .runningTool: wasWorking = true
                 default: wasWorking = false
                 }
                 if wasWorking {
-                    SoundManager.shared.playAgentDone()
-                    sessionCompleted.send()
+                    // Agent finished a work turn — wait 3s to confirm it's truly done
+                    // (not just a mid-task confirmation prompt)
+                    soundTimers[id]?.cancel()
+                    let item = DispatchWorkItem { [weak self] in
+                        guard let self else { return }
+                        guard let current = self.sessions.first(where: { $0.sessionId == id }),
+                              case .waitingForInput = current.phase else { return }
+                        SoundManager.shared.playAgentDone()
+                        self.sessionCompleted.send()
+                    }
+                    soundTimers[id] = item
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: item)
                 }
+
+            case .processing, .runningTool:
+                // Agent resumed work — cancel any pending sound timer
+                soundTimers[id]?.cancel()
+                soundTimers[id] = nil
+
+            default:
+                break
             }
-            previousPhases[session.sessionId] = session.phase
+            previousPhases[id] = session.phase
         }
     }
 

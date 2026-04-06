@@ -79,6 +79,7 @@ class WindowManager {
         let hostingView = PassThroughHostingView(rootView: rootView)
         hostingView.hitTestRect = { [weak vm] in
             guard let vm else { return .zero }
+            let peekW = vm.peekWidth
             // View coords: origin at bottom-left, y increases upward.
             switch vm.status {
             case .opened:
@@ -86,16 +87,17 @@ class WindowManager {
                 let panelWidth = panelSize.width + 52  // padding for corner radius
                 return CGRect(
                     x: (screenFrame.width - panelWidth) / 2,
-                    y: windowHeight - panelSize.height,
+                    y: windowHeight - notchHeight - 4 - panelSize.height,
                     width: panelWidth,
                     height: panelSize.height
                 )
             case .closed, .popping:
-                // Only the center notch area is interactive; peek regions are display-only
+                // Include peek areas (left + right 50pt) so hover/click there works too.
+                let totalW = notchWidth + peekW * 2
                 return CGRect(
-                    x: (screenFrame.width - notchWidth) / 2 - 8,
+                    x: (screenFrame.width - notchWidth) / 2 - peekW,
                     y: windowHeight - notchHeight,
-                    width: notchWidth + 16,
+                    width: totalW,
                     height: notchHeight + 10
                 )
             }

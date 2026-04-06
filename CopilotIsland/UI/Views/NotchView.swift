@@ -34,21 +34,23 @@ struct NotchView: View {
     private var closedPill: some View {
         let notchW = viewModel.deviceNotchRect.width
         let notchH = viewModel.deviceNotchRect.height   // exact notch height, no padding
-        let peekW: CGFloat = 50   // peek width on each side
+        let peekW  = viewModel.peekWidth                // peek width on each side (50pt)
         let isPopping = viewModel.status == .popping
+        let totalW = notchW + peekW * 2
 
         return HStack(spacing: 0) {
-            // Left peek — status icon (transparent, no interaction)
-            HStack {
+            // Left peek — status icon inside unified black bar
+            HStack(spacing: 0) {
                 Spacer()
                 LeftPeekView(sessions: sessionMonitor.activeSessions)
                     .frame(width: 24, height: notchH)
                     .scaleEffect(isPopping ? 1.15 : 1.0)
                     .animation(viewModel.animation, value: isPopping)
+                Spacer().frame(width: 6)
             }
             .frame(width: peekW, height: notchH)
 
-            // Center notch pill — flush with screen top, rounded only at bottom
+            // Center indicator dots
             HStack(spacing: 6) {
                 Circle()
                     .fill(CopilotTheme.copilotGradient)
@@ -64,33 +66,32 @@ struct NotchView: View {
                 }
             }
             .frame(width: notchW, height: notchH)
-            .background(
-                // topRadius=0: flat top edge flush with screen; only bottom is rounded
-                NotchShape(
-                    topRadius: 0,
-                    bottomRadius: isPopping ? 18 : 14
-                )
-                .fill(Color.black)
-                .animation(viewModel.animation, value: isPopping)
-            )
 
-            // Right peek — session count (transparent, no interaction)
-            HStack {
+            // Right peek — session count inside unified black bar
+            HStack(spacing: 0) {
+                Spacer().frame(width: 6)
                 RightPeekView(count: sessionMonitor.sessions.count)
                     .frame(height: notchH)
                 Spacer()
             }
             .frame(width: peekW, height: notchH)
         }
-        .frame(width: notchW + peekW * 2, height: notchH, alignment: .top)
+        // Single unified black background for the entire notch bar (left icon + center + right count).
+        // topRadius=0: flat top flush with the screen edge; only bottom corners are rounded.
+        .background(
+            NotchShape(topRadius: 0, bottomRadius: isPopping ? 18 : 14)
+                .fill(Color.black)
+                .animation(viewModel.animation, value: isPopping)
+        )
+        .frame(width: totalW, height: notchH, alignment: .top)
     }
 
     // MARK: - Expanded State
 
     private var expandedContent: some View {
         VStack(spacing: 0) {
-            // 4pt gap so the card visually drops from the notch
-            Spacer().frame(height: 4)
+            // Spacer so card starts BELOW the physical notch, not overlapping it
+            Spacer().frame(height: viewModel.deviceNotchRect.height + 4)
 
             VStack(spacing: 0) {
                 header
@@ -128,17 +129,6 @@ struct NotchView: View {
             }
 
             Spacer()
-
-            // Session count badge
-            if !sessionMonitor.sessions.isEmpty {
-                Text("\(sessionMonitor.sessions.count)")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(CopilotTheme.sagePrimary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(CopilotTheme.sagePrimary.opacity(0.12))
-                    .clipShape(Capsule())
-            }
 
             // Menu toggle
             Button(action: { viewModel.toggleMenu() }) {

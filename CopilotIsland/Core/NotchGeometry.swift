@@ -22,8 +22,11 @@ struct NotchGeometry {
         )
     }
 
+    private let peekWidth: CGFloat = 50   // must match NotchViewModel.peekWidth
+
     func isPointInNotch(_ point: CGPoint) -> Bool {
-        let expanded = notchScreenRect.insetBy(dx: -16, dy: -8)
+        // Extend to include left/right peek areas so hovering there also triggers expansion.
+        let expanded = notchScreenRect.insetBy(dx: -(16 + peekWidth), dy: -8)
         return expanded.contains(point)
     }
 
@@ -37,9 +40,10 @@ struct NotchGeometry {
     }
 
     func openedPanelRect(size: CGSize) -> CGRect {
+        // Panel starts below the physical notch (notch height + 4pt gap).
         CGRect(
             x: screenRect.midX - size.width / 2,
-            y: screenRect.maxY - size.height - 4,
+            y: screenRect.maxY - deviceNotchRect.height - 4 - size.height,
             width: size.width,
             height: size.height
         )
