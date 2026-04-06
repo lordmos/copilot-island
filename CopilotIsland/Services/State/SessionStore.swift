@@ -14,6 +14,10 @@ actor SessionStore {
     private var sessions: [String: SessionState] = [:]
     private let subject = PassthroughSubject<[SessionState], Never>()
 
+    // Pending task completions: set by session.task_complete,
+    // consumed by the next assistant.turn_end (which is the actual last output).
+    private var pendingTaskCompletions: [String: String?] = [:]
+
     nonisolated var sessionsPublisher: AnyPublisher<[SessionState], Never> {
         subject.eraseToAnyPublisher()
     }
@@ -138,19 +142,27 @@ actor SessionStore {
             }
 
         case .assistantTurnEnded(let sessionId):
-            update(sessionId) {
-                $0.phase = .waitingForInput
-                $0.currentTool = nil
-                $0.lastActivity = Date()
+            // If session.task_complete arrived before this turn_end,
+            // NOW is the right moment to finalize: assistant has written its last output.
+            if let pendingSummary = pendingTaskCompletions.removeValue(forKey: sessionId) {
+                update(sessionId) {
+                    $0.phase = .taskComplete
+                    $0.currentTool = nil
+                    $0.lastActivity = Date()
+                    if let s = pendingSummary, !s.isEmpty { $0.summary = s }
+                }
+            } else {
+                update(sessionId) {
+                    $0.phase = .waitingForInput
+                    $0.currentTool = nil
+                    $0.lastActivity = Date()
+                }
             }
 
         case .taskCompleted(let sessionId, let summary):
-            update(sessionId) {
-                $0.phase = .taskComplete
-                $0.currentTool = nil
-                $0.lastActivity = Date()
-                if let s = summary, !s.isEmpty { $0.summary = s }
-            }
+            // Don't flip phase yet — assistant.turn_end fires right after this event.
+            // Store the summary as pending; assistantTurnEnded will finalize the phase.
+            pendingTaskCompletions[sessionId] = summary
 
         case .compactionStarted(let sessionId):
             update(sessionId) {
@@ -165,6 +177,7 @@ actor SessionStore {
             }
 
         case .sessionAborted(let sessionId):
+            pendingTaskCompletions.removeValue(forKey: sessionId)
             update(sessionId) {
                 $0.phase = .interrupted
                 $0.currentTool = nil
@@ -172,12 +185,14 @@ actor SessionStore {
             }
 
         case .sessionError(let sessionId, let reason):
+            pendingTaskCompletions.removeValue(forKey: sessionId)
             update(sessionId) {
                 $0.phase = .error(reason)
                 $0.lastActivity = Date()
             }
 
         case .sessionShutdown(let sessionId):
+            pendingTaskCompletions.removeValue(forKey: sessionId)
             update(sessionId) {
                 $0.phase = .ended
                 $0.currentTool = nil
