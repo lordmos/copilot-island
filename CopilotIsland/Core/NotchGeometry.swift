@@ -40,10 +40,11 @@ struct NotchGeometry {
     }
 
     func openedPanelRect(size: CGSize) -> CGRect {
-        // Panel starts below the physical notch (notch height + 4pt gap).
+        // Panel is flush with the screen top. The height already includes the notch inset
+        // (see NotchViewModel.openedSize), so the panel covers the notch area seamlessly.
         CGRect(
             x: screenRect.midX - size.width / 2,
-            y: screenRect.maxY - deviceNotchRect.height - 4 - size.height,
+            y: screenRect.maxY - size.height,
             width: size.width,
             height: size.height
         )

@@ -94,26 +94,33 @@ struct NotchView: View {
 
     private var expandedContent: some View {
         VStack(spacing: 0) {
-            // Spacer so card starts BELOW the physical notch, not overlapping it
-            Spacer().frame(height: viewModel.deviceNotchRect.height + 4)
+            header
 
-            VStack(spacing: 0) {
-                header
+            Divider()
+                .background(CopilotTheme.border)
 
-                Divider()
-                    .background(CopilotTheme.border)
-
-                contentArea
-            }
-            .background(CopilotTheme.background)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(CopilotTheme.border, lineWidth: 0.5)
-            )
-            .shadow(color: .black.opacity(0.55), radius: 18, y: 6)
-            .frame(width: viewModel.openedSize.width, height: viewModel.openedSize.height)
+            contentArea
         }
+        // Panel is flush with the screen top. Flat top corners so the card edge aligns
+        // with the physical screen edge; only bottom corners are rounded.
+        .background(CopilotTheme.background)
+        .clipShape(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 0, bottomLeadingRadius: 16,
+                bottomTrailingRadius: 16, topTrailingRadius: 0,
+                style: .continuous
+            )
+        )
+        .overlay(
+            UnevenRoundedRectangle(
+                topLeadingRadius: 0, bottomLeadingRadius: 16,
+                bottomTrailingRadius: 16, topTrailingRadius: 0,
+                style: .continuous
+            )
+            .stroke(CopilotTheme.border, lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.55), radius: 18, y: 6)
+        .frame(width: viewModel.openedSize.width, height: viewModel.openedSize.height)
         .frame(maxWidth: .infinity, alignment: .top)
     }
 
@@ -146,7 +153,10 @@ struct NotchView: View {
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        // Top padding = notch height + gap + visual breathing room, pushing
+        // the header content below the physical notch.
+        .padding(.top, viewModel.deviceNotchRect.height + 4 + 10)
+        .padding(.bottom, 10)
     }
 
     @ViewBuilder

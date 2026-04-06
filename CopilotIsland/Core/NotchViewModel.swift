@@ -43,13 +43,16 @@ class NotchViewModel: ObservableObject {
     var windowHeight: CGFloat { geometry.windowHeight }
 
     var openedSize: CGSize {
+        // The panel starts at the screen top (flush), so its height must include
+        // the physical notch area. Content is then padded down inside the card.
+        let notchInset = deviceNotchRect.height + 4
         switch contentType {
         case .chat, .agentChat:
-            return CGSize(width: min(screenRect.width * 0.5, 620), height: 580)
+            return CGSize(width: min(screenRect.width * 0.5, 620), height: 580 + notchInset)
         case .menu:
-            return CGSize(width: min(screenRect.width * 0.4, 480), height: 320)
+            return CGSize(width: min(screenRect.width * 0.4, 480), height: 320 + notchInset)
         case .sessions:
-            return CGSize(width: min(screenRect.width * 0.4, 480), height: 320)
+            return CGSize(width: min(screenRect.width * 0.4, 480), height: 320 + notchInset)
         }
     }
 

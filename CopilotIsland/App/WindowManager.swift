@@ -87,7 +87,7 @@ class WindowManager {
                 let panelWidth = panelSize.width + 52  // padding for corner radius
                 return CGRect(
                     x: (screenFrame.width - panelWidth) / 2,
-                    y: windowHeight - notchHeight - 4 - panelSize.height,
+                    y: windowHeight - panelSize.height,  // panel top = window top = screen top
                     width: panelWidth,
                     height: panelSize.height
                 )

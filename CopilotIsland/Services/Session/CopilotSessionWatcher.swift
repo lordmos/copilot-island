@@ -151,10 +151,11 @@ final class SessionFileWatcher: @unchecked Sendable {
     func start() {
         let eventsURL = dir.appendingPathComponent("events.jsonl")
 
-        // Read existing events first
+        // Read existing events — only replay the last task (from last user.message onwards)
+        // to avoid triggering hundreds of publishes and causing startup flicker.
         if let data = try? Data(contentsOf: eventsURL) {
             offset = UInt64(data.count)
-            parseEvents(data: data, sessionId: sessionId)
+            parseInitialEvents(data: data, sessionId: sessionId)
         }
 
         fd = open(eventsURL.path, O_EVTONLY)
@@ -190,6 +191,48 @@ final class SessionFileWatcher: @unchecked Sendable {
         }
         RunLoop.main.add(timer, forMode: .common)
         refreshTimer = timer
+    }
+
+    /// Processes only the minimum events needed to represent the current session state:
+    /// - The first `session.start` (for cwd/branch metadata)
+    /// - All events from the last `user.message` onward (the current task)
+    /// Wrapped in batch mode so SessionStore emits a single publish at the end.
+    private func parseInitialEvents(data: Data, sessionId: String) {
+        guard let text = String(data: data, encoding: .utf8) else { return }
+        let lines = text.components(separatedBy: "\n").filter { !$0.isEmpty }
+        let decoder = JSONDecoder()
+
+        let allEvents = lines.compactMap { line -> CopilotRawEvent? in
+            guard let lineData = line.data(using: .utf8) else { return nil }
+            return try? decoder.decode(CopilotRawEvent.self, from: lineData)
+        }
+
+        // Find the last user.message — that's the start of the most recent task.
+        let lastUserMsgIdx = allEvents.indices.reversed().first { allEvents[$0].type == "user.message" }
+
+        var eventsToProcess: [CopilotRawEvent] = []
+
+        // Always include the first session.start so we get accurate cwd/branch metadata.
+        if let firstStart = allEvents.first(where: { $0.type == "session.start" }) {
+            eventsToProcess.append(firstStart)
+        }
+
+        if let startIdx = lastUserMsgIdx {
+            // Append all events from the last user.message to end-of-file.
+            eventsToProcess.append(contentsOf: allEvents[startIdx...])
+        } else {
+            // No user.message found (e.g. brand new session) — process everything.
+            eventsToProcess.append(contentsOf: allEvents)
+        }
+
+        let capturedId = sessionId
+        Task {
+            await SessionStore.shared.beginBatch()
+            for event in eventsToProcess {
+                await processEvent(event, sessionId: capturedId)
+            }
+            await SessionStore.shared.endBatch()
+        }
     }
 
     func stop() {

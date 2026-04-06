@@ -34,11 +34,26 @@ actor SessionStore {
     // Tracks sessions where assistant.turn_start has fired but no message yet — forces new message block.
     private var sessionNewTurn: Set<String> = []
 
+    // Batch mode: when true, publish() is suppressed until endBatch() is called.
+    // Used during initial history load to emit a single update instead of per-event renders.
+    private var suppressPublishing = false
+
     nonisolated var sessionsPublisher: AnyPublisher<[SessionState], Never> {
         subject.eraseToAnyPublisher()
     }
 
     private init() {}
+
+    // MARK: - Batch Mode
+
+    func beginBatch() {
+        suppressPublishing = true
+    }
+
+    func endBatch() {
+        suppressPublishing = false
+        publish()
+    }
 
     // MARK: - Process Events
 
@@ -266,6 +281,7 @@ actor SessionStore {
     }
 
     private func publish() {
+        guard !suppressPublishing else { return }
         let sorted = Array(sessions.values)
             .filter { $0.phase != .ended }
             .sorted { $0.lastActivity > $1.lastActivity }
