@@ -12,11 +12,27 @@ actor SessionStore {
     static let shared = SessionStore()
 
     private var sessions: [String: SessionState] = [:]
-    private let subject = PassthroughSubject<[SessionState], Never>()
+    private nonisolated(unsafe) let subject = PassthroughSubject<[SessionState], Never>()
+
+    // Effect publishers — only fire for non-historical events (< 5s old at processing time).
+    // CopilotSessionMonitor subscribes to trigger sound + peek flash animations.
+    private nonisolated(unsafe) let taskCompleteSubject = PassthroughSubject<String, Never>()
+    private nonisolated(unsafe) let sessionFailedSubject = PassthroughSubject<String, Never>()
+
+    nonisolated var taskCompletePublisher: AnyPublisher<String, Never> {
+        taskCompleteSubject.eraseToAnyPublisher()
+    }
+    nonisolated var sessionFailedPublisher: AnyPublisher<String, Never> {
+        sessionFailedSubject.eraseToAnyPublisher()
+    }
 
     // Pending task completions: set by session.task_complete,
     // consumed by the next assistant.turn_end (which is the actual last output).
-    private var pendingTaskCompletions: [String: String?] = [:]
+    // Also carries isHistorical so the effect fires only for live events.
+    private var pendingTaskCompletions: [String: (summary: String?, isHistorical: Bool)] = [:]
+
+    // Tracks sessions where assistant.turn_start has fired but no message yet — forces new message block.
+    private var sessionNewTurn: Set<String> = []
 
     nonisolated var sessionsPublisher: AnyPublisher<[SessionState], Never> {
         subject.eraseToAnyPublisher()
@@ -77,29 +93,42 @@ actor SessionStore {
             }
 
         case .assistantTurnStarted(let sessionId):
+            sessionNewTurn.insert(sessionId)   // next message starts a new block
             update(sessionId) {
                 $0.phase = .processing
                 $0.lastActivity = Date()
             }
 
         case .assistantMessageReceived(let sessionId, let content, let messageId):
+            guard !content.isEmpty else { break }
+            let isFirst = sessionNewTurn.remove(sessionId) != nil
             update(sessionId) {
                 $0.phase = .processing
                 $0.lastActivity = Date()
-                if !content.isEmpty {
+                // Concat consecutive assistant chunks within the same turn into one message.
+                if !isFirst,
+                   let lastIdx = $0.messages.indices.last,
+                   $0.messages[lastIdx].role == .assistant {
+                    let old = $0.messages[lastIdx]
+                    $0.messages[lastIdx] = CopilotMessage(
+                        id: old.id, role: .assistant,
+                        content: old.content + content,
+                        toolName: nil, toolArguments: nil, toolSuccess: nil,
+                        timestamp: old.timestamp
+                    )
+                } else {
                     $0.messages.append(CopilotMessage(
-                        id: messageId,
-                        role: .assistant,
+                        id: messageId, role: .assistant,
                         content: content,
-                        toolName: nil,
-                        toolArguments: nil,
-                        toolSuccess: nil,
+                        toolName: nil, toolArguments: nil, toolSuccess: nil,
                         timestamp: Date()
                     ))
                 }
             }
 
         case .toolStarted(let sessionId, let toolCallId, let toolName, let arguments):
+            // After a tool starts, next assistant message should open a new block.
+            sessionNewTurn.insert(sessionId)
             update(sessionId) {
                 $0.phase = .runningTool(name: toolName, args: arguments)
                 $0.currentTool = ActiveTool(
@@ -142,14 +171,18 @@ actor SessionStore {
             }
 
         case .assistantTurnEnded(let sessionId):
+            sessionNewTurn.remove(sessionId)
             // If session.task_complete arrived before this turn_end,
             // NOW is the right moment to finalize: assistant has written its last output.
-            if let pendingSummary = pendingTaskCompletions.removeValue(forKey: sessionId) {
+            if let pending = pendingTaskCompletions.removeValue(forKey: sessionId) {
                 update(sessionId) {
                     $0.phase = .taskComplete
                     $0.currentTool = nil
                     $0.lastActivity = Date()
-                    if let s = pendingSummary, !s.isEmpty { $0.summary = s }
+                    if let s = pending.summary, !s.isEmpty { $0.summary = s }
+                }
+                if !pending.isHistorical {
+                    taskCompleteSubject.send(sessionId)
                 }
             } else {
                 update(sessionId) {
@@ -159,10 +192,10 @@ actor SessionStore {
                 }
             }
 
-        case .taskCompleted(let sessionId, let summary):
+        case .taskCompleted(let sessionId, let summary, let isHistorical):
             // Don't flip phase yet — assistant.turn_end fires right after this event.
-            // Store the summary as pending; assistantTurnEnded will finalize the phase.
-            pendingTaskCompletions[sessionId] = summary
+            // Store pending; assistantTurnEnded will finalize phase and fire effects.
+            pendingTaskCompletions[sessionId] = (summary: summary, isHistorical: isHistorical)
 
         case .compactionStarted(let sessionId):
             update(sessionId) {
@@ -176,28 +209,33 @@ actor SessionStore {
                 $0.lastActivity = Date()
             }
 
-        case .sessionAborted(let sessionId):
+        case .sessionAborted(let sessionId, let isHistorical):
             pendingTaskCompletions.removeValue(forKey: sessionId)
             update(sessionId) {
                 $0.phase = .interrupted
                 $0.currentTool = nil
                 $0.lastActivity = Date()
             }
+            if !isHistorical { sessionFailedSubject.send(sessionId) }
 
-        case .sessionError(let sessionId, let reason):
+        case .sessionError(let sessionId, let reason, let isHistorical):
             pendingTaskCompletions.removeValue(forKey: sessionId)
             update(sessionId) {
                 $0.phase = .error(reason)
                 $0.lastActivity = Date()
             }
+            if !isHistorical { sessionFailedSubject.send(sessionId) }
 
-        case .sessionShutdown(let sessionId):
+        case .sessionShutdown(let sessionId, let isHistorical):
             pendingTaskCompletions.removeValue(forKey: sessionId)
+            let wasActive = sessions[sessionId]?.phase.isActive ?? false
             update(sessionId) {
                 $0.phase = .ended
                 $0.currentTool = nil
                 $0.lastActivity = Date()
             }
+            // Only fire failure for unexpected shutdowns (was still active)
+            if !isHistorical && wasActive { sessionFailedSubject.send(sessionId) }
 
         case .sessionSummaryUpdated(let sessionId, let summary):
             update(sessionId) {

@@ -46,6 +46,7 @@ targets:
       - CopilotIsland/Resources/Info.plist
       - CopilotIsland/Resources/CopilotIsland.entitlements
       - CopilotIsland/Resources/agent_done.wav
+      - CopilotIsland/Resources/agent_failed.wav
     dependencies:
       - package: Sparkle
         product: Sparkle

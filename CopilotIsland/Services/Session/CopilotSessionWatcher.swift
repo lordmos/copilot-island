@@ -231,6 +231,8 @@ final class SessionFileWatcher: @unchecked Sendable {
 
     private func processEvent(_ raw: CopilotRawEvent, sessionId: String) async {
         let data = raw.data
+        // isHistorical: event timestamp is older than 5 seconds (startup replay suppression).
+        let isHistorical = raw.isOlderThanSeconds(5)
         switch raw.type {
         case "session.start":
             // Use accurate cwd/branch from the event context (better than workspace.yaml)
@@ -294,7 +296,7 @@ final class SessionFileWatcher: @unchecked Sendable {
         case "session.task_complete":
             // Definitive signal: the agent has finished the full task.
             let summary = data?.summary
-            await SessionStore.shared.process(.taskCompleted(sessionId: sessionId, summary: summary))
+            await SessionStore.shared.process(.taskCompleted(sessionId: sessionId, summary: summary, isHistorical: isHistorical))
 
         case "session.compaction_start":
             await SessionStore.shared.process(.compactionStarted(sessionId: sessionId))
@@ -303,14 +305,14 @@ final class SessionFileWatcher: @unchecked Sendable {
             await SessionStore.shared.process(.compactionCompleted(sessionId: sessionId))
 
         case "abort":
-            await SessionStore.shared.process(.sessionAborted(sessionId: sessionId))
+            await SessionStore.shared.process(.sessionAborted(sessionId: sessionId, isHistorical: isHistorical))
 
         case "session.error":
             let reason = data?.errorMessage ?? data?.reason ?? "Unknown error"
-            await SessionStore.shared.process(.sessionError(sessionId: sessionId, reason: reason))
+            await SessionStore.shared.process(.sessionError(sessionId: sessionId, reason: reason, isHistorical: isHistorical))
 
         case "session.shutdown":
-            await SessionStore.shared.process(.sessionShutdown(sessionId: sessionId))
+            await SessionStore.shared.process(.sessionShutdown(sessionId: sessionId, isHistorical: isHistorical))
 
         default:
             break

@@ -42,7 +42,11 @@ struct NotchView: View {
             // Left peek — status icon inside unified black bar
             HStack(spacing: 0) {
                 Spacer()
-                LeftPeekView(sessions: sessionMonitor.sessions)   // all sessions, including taskComplete
+                LeftPeekView(
+                    sessions: sessionMonitor.sessions,
+                    completionFlash: sessionMonitor.completionFlashActive,
+                    failureFlash: sessionMonitor.failureFlashActive
+                )   // all sessions, including taskComplete
                     .frame(width: 24, height: notchH)
                     .scaleEffect(isPopping ? 1.15 : 1.0)
                     .animation(viewModel.animation, value: isPopping)

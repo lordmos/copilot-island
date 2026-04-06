@@ -62,12 +62,12 @@ enum SessionEvent: Sendable {
     case subagentStarted(sessionId: String, agentId: String, agentDisplayName: String)
     case subagentCompleted(sessionId: String, agentId: String)
     case assistantTurnEnded(sessionId: String)
-    case taskCompleted(sessionId: String, summary: String?)   // session.task_complete
+    case taskCompleted(sessionId: String, summary: String?, isHistorical: Bool)   // session.task_complete
     case compactionStarted(sessionId: String)
     case compactionCompleted(sessionId: String)
-    case sessionAborted(sessionId: String)
-    case sessionError(sessionId: String, reason: String)
-    case sessionShutdown(sessionId: String)
+    case sessionAborted(sessionId: String, isHistorical: Bool)
+    case sessionError(sessionId: String, reason: String, isHistorical: Bool)
+    case sessionShutdown(sessionId: String, isHistorical: Bool)
     case sessionSummaryUpdated(sessionId: String, summary: String)
     case sessionRemoved(sessionId: String)
 }

@@ -11,10 +11,27 @@ import Foundation
 
 struct CopilotRawEvent: Codable, Sendable {
     let type: String
+    let timestamp: String?   // ISO8601, e.g. "2026-04-06T01:23:45.678Z"
     let data: CopilotEventData?
 
     enum CodingKeys: String, CodingKey {
-        case type, data
+        case type, timestamp, data
+    }
+    /// Returns true if this event's timestamp is older than `seconds` ago (or has no timestamp).
+    /// Used to suppress sound/animation effects for historical events replayed at startup.
+    func isOlderThanSeconds(_ seconds: TimeInterval) -> Bool {
+        guard let ts = timestamp else { return true }  // no timestamp → treat as historical
+        let fmt = ISO8601DateFormatter()
+        fmt.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        if let date = fmt.date(from: ts) {
+            return date < Date().addingTimeInterval(-seconds)
+        }
+        // Fallback without fractional seconds
+        fmt.formatOptions = [.withInternetDateTime]
+        if let date = fmt.date(from: ts) {
+            return date < Date().addingTimeInterval(-seconds)
+        }
+        return true  // unparseable → treat as historical
     }
 }
 

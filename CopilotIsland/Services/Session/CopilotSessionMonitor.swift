@@ -14,8 +14,12 @@ class CopilotSessionMonitor: ObservableObject {
     @Published var sessions: [SessionState] = []
     @Published var activeSessions: [SessionState] = []
 
-    /// Fires once each time any session transitions to `.waitingForInput`.
-    /// WindowManager subscribes to trigger the notch pop animation.
+    // 3-second flash states for the left peek icon.
+    // taskComplete → trophy icon; failure → X icon. Both auto-clear.
+    @Published var completionFlashActive: Bool = false
+    @Published var failureFlashActive: Bool = false
+
+    /// Fires once each time a task completes — WindowManager subscribes to trigger notch pop.
     let sessionCompleted = PassthroughSubject<Void, Never>()
 
     private var cancellables = Set<AnyCancellable>()
@@ -26,26 +30,25 @@ class CopilotSessionMonitor: ObservableObject {
             .sink { [weak self] sessions in
                 self?.sessions = sessions
                 self?.activeSessions = sessions.filter { $0.phase.isActive }
-                self?.triggerSoundIfNeeded(sessions)
             }
             .store(in: &cancellables)
-    }
 
-    // Sound + pop animation fire ONLY on session.task_complete (SessionPhase.taskComplete).
-    // This is the definitive "agent finished the full task" signal.
-    // We do NOT fire on assistant.turn_end / waitingForInput (mid-task turn boundaries).
-    // Guard against re-firing: skip if prev was already .taskComplete (historical replay on startup).
-    private var previousPhases: [String: SessionPhase] = [:]
-
-    private func triggerSoundIfNeeded(_ sessions: [SessionState]) {
-        for session in sessions {
-            let prev = previousPhases[session.sessionId]
-            if case .taskComplete = session.phase, let prev, prev != .taskComplete {
+        SessionStore.shared.taskCompletePublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
                 SoundManager.shared.playAgentDone()
-                sessionCompleted.send()
+                self?.sessionCompleted.send()
+                self?.triggerCompletionFlash()
             }
-            previousPhases[session.sessionId] = session.phase
-        }
+            .store(in: &cancellables)
+
+        SessionStore.shared.sessionFailedPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                SoundManager.shared.playAgentFailed()
+                self?.triggerFailureFlash()
+            }
+            .store(in: &cancellables)
     }
 
     func startMonitoring() {
@@ -58,5 +61,26 @@ class CopilotSessionMonitor: ObservableObject {
 
     func archiveSession(sessionId: String) {
         Task { await SessionStore.shared.process(.sessionRemoved(sessionId: sessionId)) }
+    }
+
+    // MARK: - Flash helpers
+
+    private var completionFlashTask: DispatchWorkItem?
+    private var failureFlashTask: DispatchWorkItem?
+
+    private func triggerCompletionFlash() {
+        completionFlashTask?.cancel()
+        completionFlashActive = true
+        let work = DispatchWorkItem { [weak self] in self?.completionFlashActive = false }
+        completionFlashTask = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: work)
+    }
+
+    private func triggerFailureFlash() {
+        failureFlashTask?.cancel()
+        failureFlashActive = true
+        let work = DispatchWorkItem { [weak self] in self?.failureFlashActive = false }
+        failureFlashTask = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: work)
     }
 }
