@@ -14,12 +14,16 @@ struct ChatHistoryView: View {
     let session: SessionState
     let onBack: () -> Void
 
+    @State private var replyText: String = ""
+    @State private var showCopiedToast: Bool = false
+
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider().background(CopilotTheme.border)
             messageArea
             activeToolBar
+            replyBar
         }
     }
 
@@ -132,6 +136,72 @@ struct ChatHistoryView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
             .background(CopilotTheme.sagePrimary.opacity(0.06))
+        }
+    }
+
+    // MARK: - Integrated Reply Bar (shown when agent is waiting for input)
+
+    @ViewBuilder
+    private var replyBar: some View {
+        if session.phase == .waitingForInput {
+            VStack(spacing: 0) {
+                Divider().background(CopilotTheme.border)
+
+                ZStack(alignment: .bottom) {
+                    HStack(spacing: 8) {
+                        // Input field
+                        TextField("", text: $replyText, prompt: Text("回复 agent…").foregroundColor(CopilotTheme.textSecondary))
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 12))
+                            .foregroundColor(CopilotTheme.textPrimary)
+                            .onSubmit { sendReply() }
+
+                        // Send button
+                        Button(action: sendReply) {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundStyle(
+                                    replyText.trimmingCharacters(in: .whitespaces).isEmpty
+                                        ? AnyShapeStyle(CopilotTheme.textTertiary)
+                                        : AnyShapeStyle(CopilotTheme.copilotGradient)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(replyText.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+
+                    // Toast
+                    if showCopiedToast {
+                        HStack(spacing: 5) {
+                            Image(systemName: "doc.on.clipboard")
+                                .font(.system(size: 10))
+                            Text("已复制 → 切换终端按 ⌘V 粘贴")
+                                .font(.system(size: 11))
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.black.opacity(0.75))
+                        .clipShape(Capsule())
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .offset(y: -48)
+                    }
+                }
+            }
+        }
+    }
+
+    private func sendReply() {
+        let text = replyText.trimmingCharacters(in: .whitespaces)
+        guard !text.isEmpty else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        replyText = ""
+        withAnimation(.easeOut(duration: 0.2)) { showCopiedToast = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            withAnimation(.easeIn(duration: 0.2)) { showCopiedToast = false }
         }
     }
 }

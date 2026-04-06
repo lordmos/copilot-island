@@ -11,7 +11,6 @@ import SwiftUI
 struct NotchView: View {
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject var sessionMonitor: CopilotSessionMonitor
-    @StateObject private var copilotClient = GitHubCopilotClient()
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -30,39 +29,57 @@ struct NotchView: View {
         .ignoresSafeArea()
     }
 
-    // MARK: - Closed State
+    // MARK: - Closed State (with peek)
 
     private var closedPill: some View {
-        HStack(spacing: 6) {
-            // Sage green dot
-            Circle()
-                .fill(CopilotTheme.copilotGradient)
-                .frame(width: 8, height: 8)
-                .shadow(color: CopilotTheme.sagePrimary.opacity(0.8), radius: 4)
+        let notchW = viewModel.deviceNotchRect.width + 20
+        let notchH = viewModel.deviceNotchRect.height + 8
+        let peekW: CGFloat = 50   // peek width on each side
 
-            if sessionMonitor.activeSessions.isEmpty {
-                // Idle — subtle dot
-                Circle()
-                    .fill(CopilotTheme.textTertiary)
-                    .frame(width: 5, height: 5)
-            } else {
-                // Active — sage pulse
-                PulsingDot()
+        return HStack(spacing: 0) {
+            // Left peek — status icon
+            HStack {
+                Spacer()
+                LeftPeekView(sessions: sessionMonitor.activeSessions)
+                    .frame(width: 20, height: notchH)
             }
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 5)
-        .background(
-            NotchShape(
-                topRadius: viewModel.status == .popping ? 9 : 6,
-                bottomRadius: viewModel.status == .popping ? 18 : 14
+            .frame(width: peekW, height: notchH)
+
+            // Center notch pill (black background)
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(CopilotTheme.copilotGradient)
+                    .frame(width: 8, height: 8)
+                    .shadow(color: CopilotTheme.sagePrimary.opacity(0.8), radius: 4)
+
+                if sessionMonitor.activeSessions.isEmpty {
+                    Circle()
+                        .fill(CopilotTheme.textTertiary)
+                        .frame(width: 5, height: 5)
+                } else {
+                    PulsingDot()
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .frame(width: notchW, height: notchH)
+            .background(
+                NotchShape(
+                    topRadius: viewModel.status == .popping ? 9 : 6,
+                    bottomRadius: viewModel.status == .popping ? 18 : 14
+                )
+                .fill(Color.black)
             )
-            .fill(Color.black)
-        )
-        .frame(
-            width: viewModel.deviceNotchRect.width + 20,
-            height: viewModel.deviceNotchRect.height + 8
-        )
+
+            // Right peek — session count
+            HStack {
+                RightPeekView(count: sessionMonitor.sessions.count)
+                    .frame(height: notchH)
+                Spacer()
+            }
+            .frame(width: peekW, height: notchH)
+        }
+        .frame(width: notchW + peekW * 2, height: notchH)
     }
 
     // MARK: - Expanded State
@@ -120,19 +137,6 @@ struct NotchView: View {
                     .clipShape(Capsule())
             }
 
-            // Chat button
-            Button(action: { viewModel.showAgentChat() }) {
-                Image(systemName: "bubble.left.and.bubble.right")
-                    .font(.system(size: 12))
-                    .foregroundColor(viewModel.contentType == .agentChat
-                        ? CopilotTheme.sagePrimary
-                        : CopilotTheme.textSecondary)
-                    .frame(width: 24, height: 24)
-                    .background(CopilotTheme.cardBackground)
-                    .clipShape(Circle())
-            }
-            .buttonStyle(.plain)
-
             // Menu toggle
             Button(action: { viewModel.toggleMenu() }) {
                 Image(systemName: viewModel.contentType == .menu ? "xmark" : "ellipsis")
@@ -162,9 +166,10 @@ struct NotchView: View {
                 onBack: { viewModel.exitChat() }
             )
         case .agentChat:
-            AgentChatView(
-                client: copilotClient,
-                onBack: { viewModel.exitChat() }
+            // Standalone chat de-emphasized — show sessions as fallback
+            SessionsListView(
+                sessions: sessionMonitor.sessions,
+                onSelectSession: { viewModel.showChat(for: $0) }
             )
         case .menu:
             MenuView(onClose: { viewModel.toggleMenu() })
@@ -196,3 +201,4 @@ struct PulsingDot: View {
         }
     }
 }
+

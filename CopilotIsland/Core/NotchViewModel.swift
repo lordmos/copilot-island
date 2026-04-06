@@ -46,7 +46,7 @@ class NotchViewModel: ObservableObject {
         case .chat, .agentChat:
             return CGSize(width: min(screenRect.width * 0.5, 620), height: 580)
         case .menu:
-            return CGSize(width: min(screenRect.width * 0.4, 480), height: 420)
+            return CGSize(width: min(screenRect.width * 0.4, 480), height: 320)
         case .sessions:
             return CGSize(width: min(screenRect.width * 0.4, 480), height: 320)
         }
