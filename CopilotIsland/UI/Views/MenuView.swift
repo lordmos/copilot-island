@@ -42,13 +42,46 @@ struct MenuView: View {
 
                 // GitHub Token
                 menuSection("GITHUB TOKEN") {
-                    Text("Required for Copilot Chat. Create a PAT with `copilot_chat:read` scope or enable Copilot access.")
-                        .font(.system(size: 10))
-                        .foregroundColor(CopilotTheme.textTertiary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    // What is it
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(CopilotTheme.githubBlue.opacity(0.7))
+                            .padding(.top, 1)
+                        Text("Token 是 GitHub 颁发给你的访问凭证，让 Copilot Island 代表你向 Copilot 发送对话请求。它只存在你本机的 Keychain 里，不会上传。")
+                            .font(.system(size: 10))
+                            .foregroundColor(CopilotTheme.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
+                    // Steps
+                    VStack(alignment: .leading, spacing: 5) {
+                        tokenStep(num: "1", text: "打开 GitHub → Settings → Developer settings")
+                        tokenStep(num: "2", text: "选 Personal access tokens → Tokens (classic)")
+                        tokenStep(num: "3", text: "点 Generate new token，勾选 copilot 权限")
+                        tokenStep(num: "4", text: "复制生成的 ghp_… 粘贴到下方输入框")
+                    }
+                    .padding(8)
+                    .background(CopilotTheme.githubBlue.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                    // Quick open button
+                    Button(action: {
+                        NSWorkspace.shared.open(URL(string: "https://github.com/settings/tokens/new?description=CopilotIsland&scopes=copilot")!)
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "safari")
+                                .font(.system(size: 10))
+                            Text("在 GitHub 上创建 Token →")
+                                .font(.system(size: 11))
+                        }
+                        .foregroundColor(CopilotTheme.githubBlue)
+                    }
+                    .buttonStyle(.plain)
+
+                    // Input + Save
                     HStack(spacing: 6) {
-                        SecureField("ghp_…", text: $tokenInput)
+                        SecureField("粘贴 ghp_… token", text: $tokenInput)
                             .textFieldStyle(.plain)
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundColor(CopilotTheme.textPrimary)
@@ -56,7 +89,7 @@ struct MenuView: View {
                                 tokenInput = KeychainHelper.shared.loadToken() ?? ""
                             }
 
-                        Button(tokenSaved ? "Saved ✓" : "Save") {
+                        Button(tokenSaved ? "已保存 ✓" : "保存") {
                             KeychainHelper.shared.saveToken(tokenInput)
                             tokenSaved = true
                             DispatchQueue.main.asyncAfter(deadline: .now() + 2) { tokenSaved = false }
@@ -151,5 +184,21 @@ struct MenuView: View {
             .copilotCard()
         }
         .padding(.bottom, 8)
+    }
+
+    @ViewBuilder
+    private func tokenStep(num: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 6) {
+            Text(num)
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(CopilotTheme.githubBlue)
+                .frame(width: 14, height: 14)
+                .background(CopilotTheme.githubBlue.opacity(0.15))
+                .clipShape(Circle())
+            Text(text)
+                .font(.system(size: 10))
+                .foregroundColor(CopilotTheme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
