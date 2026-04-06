@@ -206,6 +206,12 @@ private struct SessionRow: View {
         case .waitingForInput:
             return session.lastUserMessage
                 ?? NSLocalizedString("Waiting for input", comment: "")
+        case .taskComplete:
+            return session.summary
+                ?? session.lastUserMessage
+                ?? NSLocalizedString("Task complete", comment: "")
+        case .compacting:
+            return NSLocalizedString("Compacting context…", comment: "")
         case .ended:
             return NSLocalizedString("Session ended", comment: "")
         case .error(let msg):
@@ -220,17 +226,21 @@ private struct SessionRow: View {
     @ViewBuilder
     private var phaseIndicator: some View {
         switch session.phase {
-        case .processing:
+        case .processing, .compacting:
             SageSpinner(size: 12)
                 .frame(width: 14, height: 14)
         case .runningTool:
             Image(systemName: "bolt.fill")
                 .font(.system(size: 10))
                 .foregroundColor(CopilotTheme.sagePrimary)
-        case .waitingForInput:
+        case .taskComplete:
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 12))
                 .foregroundColor(CopilotTheme.successGreen)
+        case .waitingForInput:
+            Image(systemName: "pause.circle")
+                .font(.system(size: 12))
+                .foregroundColor(CopilotTheme.textTertiary)
         case .error:
             Image(systemName: "exclamationmark.circle.fill")
                 .font(.system(size: 12))

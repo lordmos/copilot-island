@@ -38,6 +38,24 @@ actor SessionStore {
                 publish()
             }
 
+        case .sessionContextUpdated(let sessionId, let cwd, _, let branch):
+            // session.start event provides accurate cwd/branch (overrides workspace.yaml)
+            update(sessionId) {
+                $0 = SessionState(
+                    sessionId: $0.sessionId,
+                    cwd: cwd,
+                    projectName: URL(fileURLWithPath: cwd).lastPathComponent,
+                    gitBranch: branch,
+                    phase: $0.phase,
+                    messages: $0.messages,
+                    currentTool: $0.currentTool,
+                    summary: $0.summary,
+                    lastUserMessage: $0.lastUserMessage,
+                    lastActivity: $0.lastActivity,
+                    createdAt: $0.createdAt
+                )
+            }
+
         case .userMessageSent(let sessionId, let content):
             update(sessionId) {
                 $0.phase = .processing
@@ -91,8 +109,8 @@ actor SessionStore {
 
         case .toolCompleted(let sessionId, let toolCallId, let success, let result):
             update(sessionId) { state in
-                let toolName = state.currentTool?.toolName  // capture before nil
-                let toolArgs = state.currentTool?.arguments // capture before nil
+                let toolName = state.currentTool?.toolName
+                let toolArgs = state.currentTool?.arguments
                 state.currentTool = nil
                 state.phase = .processing
                 state.lastActivity = Date()
@@ -107,10 +125,42 @@ actor SessionStore {
                 ))
             }
 
+        case .subagentStarted(let sessionId, let agentId, let displayName):
+            update(sessionId) {
+                $0.phase = .runningTool(name: displayName, args: agentId)
+                $0.lastActivity = Date()
+            }
+
+        case .subagentCompleted(let sessionId, _):
+            update(sessionId) {
+                $0.phase = .processing
+                $0.lastActivity = Date()
+            }
+
         case .assistantTurnEnded(let sessionId):
             update(sessionId) {
                 $0.phase = .waitingForInput
                 $0.currentTool = nil
+                $0.lastActivity = Date()
+            }
+
+        case .taskCompleted(let sessionId, let summary):
+            update(sessionId) {
+                $0.phase = .taskComplete
+                $0.currentTool = nil
+                $0.lastActivity = Date()
+                if let s = summary, !s.isEmpty { $0.summary = s }
+            }
+
+        case .compactionStarted(let sessionId):
+            update(sessionId) {
+                $0.phase = .compacting
+                $0.lastActivity = Date()
+            }
+
+        case .compactionCompleted(let sessionId):
+            update(sessionId) {
+                $0.phase = .processing
                 $0.lastActivity = Date()
             }
 

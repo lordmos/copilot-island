@@ -49,7 +49,9 @@ enum CopilotTheme {
         switch phase {
         case .processing: return sageGlow
         case .runningTool: return sagePrimary
-        case .waitingForInput: return successGreen   // completed turn
+        case .waitingForInput: return textTertiary        // mid-task pause, no special color
+        case .taskComplete: return successGreen            // task fully done
+        case .compacting: return sagePrimary               // compaction in progress
         case .ended: return textTertiary
         case .error: return warningRed
         case .interrupted: return warningRed

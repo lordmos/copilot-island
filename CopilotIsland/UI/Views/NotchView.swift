@@ -42,7 +42,7 @@ struct NotchView: View {
             // Left peek — status icon inside unified black bar
             HStack(spacing: 0) {
                 Spacer()
-                LeftPeekView(sessions: sessionMonitor.activeSessions)
+                LeftPeekView(sessions: sessionMonitor.sessions)   // all sessions, including taskComplete
                     .frame(width: 24, height: notchH)
                     .scaleEffect(isPopping ? 1.15 : 1.0)
                     .animation(viewModel.animation, value: isPopping)
@@ -57,7 +57,7 @@ struct NotchView: View {
                     .frame(width: 7, height: 7)
                     .shadow(color: CopilotTheme.sagePrimary.opacity(0.8), radius: 4)
 
-                if sessionMonitor.activeSessions.isEmpty {
+                if sessionMonitor.activeSessions.isEmpty && !sessionMonitor.sessions.contains(where: { $0.phase == .taskComplete }) {
                     Circle()
                         .fill(CopilotTheme.textTertiary)
                         .frame(width: 4, height: 4)

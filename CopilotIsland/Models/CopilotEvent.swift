@@ -23,6 +23,7 @@ struct CopilotEventData: Codable, Sendable {
     let sessionId: String?
     let copilotVersion: String?
     let startTime: String?
+    let context: SessionStartContext?   // cwd, branch, gitRoot
 
     // user.message
     let content: String?
@@ -47,8 +48,15 @@ struct CopilotEventData: Codable, Sendable {
     let reason: String?
     let errorMessage: String?  // "message" field in session.error events
 
+    // session.task_complete
+    let summary: String?
+
+    // subagent.started / completed
+    let agentName: String?
+    let agentDisplayName: String?
+
     enum CodingKeys: String, CodingKey {
-        case sessionId, copilotVersion, startTime
+        case sessionId, copilotVersion, startTime, context
         case content, interactionId
         case turnId
         case messageId, toolRequests, reasoningText
@@ -56,7 +64,17 @@ struct CopilotEventData: Codable, Sendable {
         case success, result
         case reason
         case errorMessage = "message"
+        case summary
+        case agentName, agentDisplayName
     }
+}
+
+/// Nested context block inside session.start events.
+struct SessionStartContext: Codable, Sendable {
+    let cwd: String?
+    let gitRoot: String?
+    let branch: String?
+    let headCommit: String?
 }
 
 struct CopilotToolRequest: Codable, Sendable {

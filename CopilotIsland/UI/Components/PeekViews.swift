@@ -21,10 +21,20 @@ enum NotchPeekStatus {
 extension Array where Element == SessionState {
     var peekStatus: NotchPeekStatus {
         if isEmpty { return .none }
-        if contains(where: { if case .error = $0.phase { return true }; return $0.phase == .interrupted }) { return .error }
-        if contains(where: { if case .runningTool = $0.phase { return true }; return false }) { return .runningTool }
-        if contains(where: { $0.phase == .processing }) { return .processing }
-        if contains(where: { $0.phase == .waitingForInput }) { return .waitingInput }
+        // Priority: error > running tools/sub-agents > thinking > task complete > nothing
+        if contains(where: {
+            if case .error = $0.phase { return true }
+            return $0.phase == .interrupted
+        }) { return .error }
+        if contains(where: {
+            if case .runningTool = $0.phase { return true }
+            return false
+        }) { return .runningTool }
+        if contains(where: { $0.phase == .processing || $0.phase == .compacting }) {
+            return .processing
+        }
+        if contains(where: { $0.phase == .taskComplete }) { return .waitingInput }
+        // waitingForInput (mid-task turn boundary): no peek status — not notable to user
         return .none
     }
 }

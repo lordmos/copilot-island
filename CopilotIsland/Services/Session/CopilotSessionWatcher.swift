@@ -232,6 +232,17 @@ final class SessionFileWatcher: @unchecked Sendable {
     private func processEvent(_ raw: CopilotRawEvent, sessionId: String) async {
         let data = raw.data
         switch raw.type {
+        case "session.start":
+            // Use accurate cwd/branch from the event context (better than workspace.yaml)
+            if let ctx = data?.context, let cwd = ctx.cwd {
+                await SessionStore.shared.process(.sessionContextUpdated(
+                    sessionId: sessionId,
+                    cwd: cwd,
+                    gitRoot: ctx.gitRoot,
+                    branch: ctx.branch
+                ))
+            }
+
         case "user.message":
             let content = data?.content ?? ""
             await SessionStore.shared.process(.userMessageSent(sessionId: sessionId, content: content))
@@ -264,14 +275,37 @@ final class SessionFileWatcher: @unchecked Sendable {
                 success: success, result: result
             ))
 
+        case "subagent.started":
+            let agentId   = data?.toolCallId ?? UUID().uuidString
+            let agentName = data?.agentDisplayName ?? data?.agentName ?? "Sub-agent"
+            await SessionStore.shared.process(.subagentStarted(
+                sessionId: sessionId, agentId: agentId, agentDisplayName: agentName
+            ))
+
+        case "subagent.completed", "subagent.failed":
+            let agentId = data?.toolCallId ?? ""
+            await SessionStore.shared.process(.subagentCompleted(
+                sessionId: sessionId, agentId: agentId
+            ))
+
         case "assistant.turn_end":
             await SessionStore.shared.process(.assistantTurnEnded(sessionId: sessionId))
+
+        case "session.task_complete":
+            // Definitive signal: the agent has finished the full task.
+            let summary = data?.summary
+            await SessionStore.shared.process(.taskCompleted(sessionId: sessionId, summary: summary))
+
+        case "session.compaction_start":
+            await SessionStore.shared.process(.compactionStarted(sessionId: sessionId))
+
+        case "session.compaction_complete":
+            await SessionStore.shared.process(.compactionCompleted(sessionId: sessionId))
 
         case "abort":
             await SessionStore.shared.process(.sessionAborted(sessionId: sessionId))
 
         case "session.error":
-            // Real Copilot CLI uses "message" field; fall back to "reason" for compatibility
             let reason = data?.errorMessage ?? data?.reason ?? "Unknown error"
             await SessionStore.shared.process(.sessionError(sessionId: sessionId, reason: reason))
 

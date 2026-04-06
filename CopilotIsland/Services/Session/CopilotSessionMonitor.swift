@@ -31,48 +31,20 @@ class CopilotSessionMonitor: ObservableObject {
             .store(in: &cancellables)
     }
 
-    // Plays the 8-bit chime and fires sessionCompleted only after FULL work is done.
-    // Uses a 3-second debounce: if the agent immediately continues (e.g. multi-step confirmation),
-    // the timer is cancelled and no sound plays. Sound only fires if agent stays idle ≥ 3 seconds.
+    // Sound + pop animation fire ONLY on session.task_complete (SessionPhase.taskComplete).
+    // This is the definitive "agent finished the full task" signal.
+    // We do NOT fire on assistant.turn_end / waitingForInput (mid-task turn boundaries).
+    // Guard against re-firing: skip if prev was already .taskComplete (historical replay on startup).
     private var previousPhases: [String: SessionPhase] = [:]
-    private var soundTimers: [String: DispatchWorkItem] = [:]
 
     private func triggerSoundIfNeeded(_ sessions: [SessionState]) {
         for session in sessions {
             let prev = previousPhases[session.sessionId]
-            let id   = session.sessionId
-
-            switch session.phase {
-            case .waitingForInput:
-                let wasWorking: Bool
-                switch prev {
-                case .processing, .runningTool: wasWorking = true
-                default: wasWorking = false
-                }
-                if wasWorking {
-                    // Agent finished a work turn — wait 3s to confirm it's truly done
-                    // (not just a mid-task confirmation prompt)
-                    soundTimers[id]?.cancel()
-                    let item = DispatchWorkItem { [weak self] in
-                        guard let self else { return }
-                        guard let current = self.sessions.first(where: { $0.sessionId == id }),
-                              case .waitingForInput = current.phase else { return }
-                        SoundManager.shared.playAgentDone()
-                        self.sessionCompleted.send()
-                    }
-                    soundTimers[id] = item
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: item)
-                }
-
-            case .processing, .runningTool:
-                // Agent resumed work — cancel any pending sound timer
-                soundTimers[id]?.cancel()
-                soundTimers[id] = nil
-
-            default:
-                break
+            if case .taskComplete = session.phase, let prev, prev != .taskComplete {
+                SoundManager.shared.playAgentDone()
+                sessionCompleted.send()
             }
-            previousPhases[id] = session.phase
+            previousPhases[session.sessionId] = session.phase
         }
     }
 
