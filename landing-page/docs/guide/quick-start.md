@@ -12,8 +12,8 @@ copilot "Refactor this function to use async/await"
 
 Copilot Island **automatically** detects the new session. You'll see:
 
-- A **pulsing purple dot** in the notch indicating an active session
-- The session appears in the expanded panel when you click the notch
+- A **pulsing dot** in the notch indicating an active session
+- The left peek icon animates to show the agent's current state (working, complete, error)
 
 ## 3. Explore the Panel
 
@@ -24,16 +24,17 @@ Copilot Island **automatically** detects the new session. You'll see:
 | 🔵 Sessions | All active and recent Copilot CLI sessions |
 | 💬 Chat | Full conversation history with Markdown rendering |
 | ⚡ Tools | Real-time tool execution feed (file writes, shell commands) |
-| 🤖 AI Chat | Direct chat with GitHub Models (GPT-4o, Claude, etc.) |
+| ⚙️ Settings | Sound, About, and check-for-updates |
 
-## 4. Use GitHub Models Chat (Optional)
+## 4. Session Notifications
 
-To use the standalone AI chat feature:
+When the agent finishes a task:
+- 🏆 A **trophy animation** flashes in the left notch peek for 3 seconds
+- 🎵 A **completion chime** plays (can be disabled in Settings)
 
-1. Open **Settings** → **GitHub Token**
-2. Enter your [GitHub Personal Access Token](https://github.com/settings/tokens) with `models:read` scope
-3. Select your preferred model (GPT-4o, Claude 3.5 Sonnet, etc.)
-4. Chat directly without needing the CLI!
+If the agent is aborted or encounters an error:
+- ❌ A **failure animation** flashes for 3 seconds
+- 🔔 A **failure sound** plays
 
 ## 5. Keyboard Shortcuts
 

@@ -4,43 +4,28 @@ Copilot Island requires minimal configuration and works out of the box.
 
 ## Settings Panel
 
-Access settings by clicking the **⚙️ gear icon** in the expanded notch panel.
+Access settings by clicking the **⋯ menu icon** in the expanded notch panel, then selecting **Settings**.
 
-### GitHub Token
+### Sound Effects
 
-Required for the GitHub Models AI Chat feature.
+Toggle the completion chime and failure sound on or off:
 
-1. Visit [github.com/settings/tokens](https://github.com/settings/tokens)
-2. Create a new token with `models:read` permission
-3. Paste the token in **Settings → GitHub Token**
+- **Completion sound** — plays when the agent finishes a task (`session.task_complete` → `assistant.turn_end`)
+- **Failure sound** — plays on `abort`, `session.error`, or unexpected `session.shutdown`
 
-Your token is stored securely in macOS Keychain, never on disk in plain text.
+### About & Updates
 
-### Model Selection
-
-Choose your default AI model for the chat feature:
-
-| Model | Description |
-|-------|-------------|
-| `gpt-4o` | Best for complex coding tasks |
-| `gpt-4o-mini` | Fast and efficient for simple queries |
-| `claude-3-5-sonnet` | Excellent reasoning and code generation |
-| `meta-llama-3.1-70b-instruct` | Open-source option |
-
-### Notifications
-
-Enable system notifications to be alerted when:
-- A new Copilot session starts
-- A session completes
+The **About** tab in Settings shows the current app version and lets you **Check for Updates** (powered by Sparkle). Copilot Island will notify you when a new release is available on GitHub.
 
 ## Session Watching
 
 Copilot Island automatically watches `~/.copilot/session-state/` for changes.  
 No configuration needed — it just works.
 
+On startup, only the **current task** (events from the last `user.message` onward) is loaded to keep the UI fast. Older history is not replayed.
+
 ## macOS Permissions
 
-On first launch, grant these permissions when prompted:
+On first launch, grant this permission when prompted:
 
-- **Files and Folders** → Allow access to read Copilot CLI session files
-- **Network** → Required for GitHub Models API calls (AI chat feature)
+- **Files and Folders** → Allow access to read Copilot CLI session files in your home directory
