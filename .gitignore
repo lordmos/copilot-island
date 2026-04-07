@@ -68,3 +68,5 @@ production-docs/
 
 # XcodeGen generated project (regenerate with scripts/setup.sh)
 *.xcodeproj/
+
+super-spec/
