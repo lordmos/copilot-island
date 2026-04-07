@@ -136,6 +136,7 @@ struct MenuView: View {
             VStack(alignment: .leading, spacing: 8) {
                 content()
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
             .copilotCard()
         }
