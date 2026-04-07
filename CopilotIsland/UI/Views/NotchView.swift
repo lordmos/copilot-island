@@ -18,7 +18,7 @@ struct NotchView: View {
 
             if viewModel.status == .opened {
                 expandedContent
-                    .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
+                    .transition(.opacity.combined(with: .scale(scale: 1, anchor: .top)))
             } else {
                 closedPill
                     .transition(.opacity)
@@ -155,7 +155,7 @@ struct NotchView: View {
         .padding(.horizontal, 16)
         // Top padding = notch height + gap + visual breathing room, pushing
         // the header content below the physical notch.
-        .padding(.top, viewModel.deviceNotchRect.height + 4 + 10)
+        .padding(.top, 10)
         .padding(.bottom, 10)
     }
 

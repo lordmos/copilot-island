@@ -146,7 +146,7 @@ private struct ToolIcon: View {
         Image(systemName: "wrench.and.screwdriver.fill")
             .font(.system(size: 12, weight: .medium))
             .foregroundColor(Color(red: 1.0, green: 0.72, blue: 0.25))
-            .offset(y: bouncing ? -2 : 1)
+            .offset(y: bouncing ? -1 : 2)
             .onAppear {
                 withAnimation(.easeInOut(duration: 0.55).repeatForever()) {
                     bouncing = true
