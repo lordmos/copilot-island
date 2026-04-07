@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>Copilot Island Changelog</title>
+        <link>https://github.com/lordmos/copilot-island</link>
+        <description>Most recent changes with links to updates.</description>
+        <item>
+            <title>Version 0.1.7</title>
+            <sparkle:releaseNotesLink>https://github.com/lordmos/copilot-island/releases/tag/v0.1.7</sparkle:releaseNotesLink>
+            <pubDate>Tue, 07 Apr 2026 03:10:26 GMT</pubDate>
+            <enclosure url="https://github.com/lordmos/copilot-island/releases/download/v0.1.7/CopilotIsland-0.1.7.dmg"
+                       sparkle:version="0.1.7"
+                       sparkle:shortVersionString="0.1.7"
+                       length="2225833"
+                       type="application/octet-stream" />
+        </item>
+    </channel>
+</rss>

@@ -6,7 +6,9 @@ on:
       - 'v*.*.*'
 
 permissions:
-  contents: write   # needed to create GitHub releases and upload assets
+  contents: write
+  pages: write
+  id-token: write
 
 jobs:
   build-and-release:
@@ -21,6 +23,12 @@ jobs:
 
       - name: Install XcodeGen
         run: brew install xcodegen --quiet
+
+      - name: Inject Version into project.yml
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          sed -i '' "s/MARKETING_VERSION:.*/MARKETING_VERSION: $VERSION/" project.yml
+          sed -i '' "s/CURRENT_PROJECT_VERSION:.*/CURRENT_PROJECT_VERSION: $VERSION/" project.yml
 
       - name: Generate Xcode Project
         run: xcodegen generate
@@ -220,3 +228,35 @@ jobs:
           files: ${{ env.DMG_PATH }}
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
+
+  update-appcast:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: landing-page/package-lock.json
+
+      - name: Configure Appcast
+        run: |
+          cd landing-page
+          npm install
+          node scripts/generate-appcast.js
+
+      - name: Build VitePress site
+        run: cd landing-page && npx vitepress build docs
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: landing-page/docs/.vitepress/dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

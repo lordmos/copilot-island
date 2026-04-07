@@ -25,7 +25,7 @@
 
     <!-- Sparkle Updater -->
     <key>SUFeedURL</key>
-    <string>https://github.com/lordmos/copilot-island/releases.atom</string>
+    <string>https://lordmos.github.io/copilot-island/appcast.xml</string>
 
     <!-- Required: Files access for ~/.copilot/session-state/ watching -->
     <key>NSDesktopFolderUsageDescription</key>
