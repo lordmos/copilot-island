@@ -7,45 +7,47 @@
 
 ## 快速开始
 
-### 第一步：初始化项目
+SuperSpec 支持三种启动方式，取决于你的项目现状。
 
-在你的项目根目录运行：
+### 情况 A：我有一个新 idea（从零开始）
 
 ```bash
 /sps:init
 ```
 
-这会生成 `super-spec/` 目录，并自动保护 `.private/` 文件夹（加入 `.gitignore`）。
-
-### 第二步：写下你的需求
-
-打开 `super-spec/kanban/user/requirements.md`，按模板添加一个条目：
-
-```markdown
-## 待处理
-
-- id: req-001
-  title: "添加深色模式支持"
-  priority: high
-  detail: |
-    系统切换深色模式时，应用界面应自动跟随。
-```
-
-保存文件。Agent 会自动检测到新条目并开始工作。
-
-或者，你也可以主动触发：
+初始化后，告诉 PM agent 你的想法：
 
 ```bash
-/sps:propose dark-mode-support
+/sps:propose my-awesome-app
 ```
 
-### 第三步：等待，偶尔回答问题
+PM 会引导你头脑风暴，产出：
+- `proposal.md` — 需求整理
+- `phases.md` — 阶段工作计划
+- `agents.yaml` — 根据项目类型自动选择的 agent 角色 + 工作目录
 
-Agent 工作期间，你只需：
-- 监看 `super-spec/kanban/agent/blockers.md` — 如果 agent 遇到需要你决策的问题，会写在这里
-- 在 `super-spec/kanban/user/confirmations.md` 回答问题，agent 自动继续
+### 情况 B：我有需求文档
 
-完成后，查看 `super-spec/kanban/agent/outputs.md` 看产出摘要。
+```bash
+/sps:init
+```
+
+把你的需求文档（PRD、设计稿等）放到项目里，然后：
+
+```bash
+/sps:propose feature-name
+```
+
+PM 会阅读你的文档，结构化整理，发现缺失的信息会在 `kanban/agent/blockers.md` 向你提问。
+
+### 情况 C：项目已经在做了（中途接入）
+
+```bash
+/sps:init
+/sps:propose current-sprint
+```
+
+PM 会扫描现有代码、依赖、git 历史，产出项目审计报告（`audit.md`），然后基于现状规划后续工作。
 
 ---
 
@@ -83,9 +85,14 @@ Agent 工作期间，你只需：
 ### 完整变更流程
 
 ```
-你提需求 → PM 拆解 → Architect 设计 → Implementer 编码
-→ Tester 测试 → Reviewer 审查 → Docs 更新 → 归档
+你提需求 → PM 整理 + 选角色 → Architect 设计 + UI/UX 设计（并行）
+→ Implementer 编码 → Tester 测试 → Reviewer 审查 
+→ Docs 更新 → Ops 部署（如需）→ 归档
 ```
+
+PM 会根据项目类型决定需要哪些角色。不是每个项目都需要全部角色。例如：
+- 纯前端项目：PM → UI/UX → frontend-dev → Tester → Reviewer
+- 后端 API：PM → Architect → backend-dev → Tester → Reviewer → Ops
 
 每一步都有对应命令，也可以一键执行全流程：
 
@@ -228,6 +235,20 @@ super-spec/kanban/agent/blockers.md
 # 7. 归档
 /sps:archive dark-mode-support
 ```
+
+---
+
+## 理解 PM 自动分配的角色
+
+当你启动一个变更后，PM 会分析项目类型并生成 `agents.yaml`。你可以在 `changes/{name}/agents.yaml` 中查看 PM 选择了哪些角色：
+
+```bash
+cat super-spec/changes/dark-mode/agents.yaml
+```
+
+如果你认为 PM 选错了角色（比如遗漏了 UI/UX），可以直接编辑这个文件，启用或禁用角色。
+
+完整角色列表参见 [`docs/agent-roster.md`](docs/agent-roster.md)。
 
 ---
 
