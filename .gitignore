@@ -69,4 +69,5 @@ production-docs/
 # XcodeGen generated project (regenerate with scripts/setup.sh)
 *.xcodeproj/
 
-super-spec/
+# SuperSpec 私密文件（永不提交）
+super-spec/.private/
