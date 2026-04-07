@@ -23,6 +23,10 @@
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
 
+    <!-- Sparkle Updater -->
+    <key>SUFeedURL</key>
+    <string>https://github.com/lordmos/copilot-island/releases.atom</string>
+
     <!-- Required: Files access for ~/.copilot/session-state/ watching -->
     <key>NSDesktopFolderUsageDescription</key>
     <string>Copilot Island needs to read GitHub Copilot CLI session data.</string>
